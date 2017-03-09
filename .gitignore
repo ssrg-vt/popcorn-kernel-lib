@@ -27,6 +27,9 @@
 *.i*86
 *.x86_64
 *.hex
+basic
+mt
+ping
 
 # Debug files
 *.dSYM/
