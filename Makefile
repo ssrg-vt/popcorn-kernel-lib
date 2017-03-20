@@ -1,5 +1,7 @@
 CC = gcc
-CFLAGS += -DDEBUG -g -DPOPCORN_X86
+CFLAGS += -DDEBUG -g
+#CFLAGS += POPCORN_X86
+#CFLAGS += -DPOPCORN_ARM
 LDFLAGS += -static -pthread
 TARGETS = basic mt ping
 

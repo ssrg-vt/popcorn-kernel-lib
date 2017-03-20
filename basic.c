@@ -18,7 +18,7 @@ void loop(void)
 	int z;
 	int fd;
 
-	fd = open("/home/beowulf/test/x", O_CREAT | O_WRONLY | O_TRUNC, 0666);
+	fd = open("/home/beowulf/basic-output", O_CREAT | O_WRONLY | O_TRUNC, 0666);
 	write(fd, "HELLO!", 7);
 	close(fd);
 	return;
@@ -29,14 +29,13 @@ int main(int argc, char *argv[])
 	unsigned long rbp, rsp;
 
 	if (argc == 1) {
-		printf("Migrate\n", argc);
+		printf("Migrate me!\n");
 		popcorn_migrate_this(0);
 		loop();
 		popcorn_migrate_this(0);
 	}
 
-	printf("Hello world\n");
-	printf("What the!\n");
+	printf("Welcome back to the origin\n");
 
 	return 0xdeadbeaf;
 }

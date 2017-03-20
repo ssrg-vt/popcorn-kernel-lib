@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <unistd.h>
 #include <string.h>
 #include <pthread.h>
 #include <sys/syscall.h>
@@ -71,8 +72,7 @@ int main(int argc, char *argv[])
 
 	for (i = 0; i < THREADS; i++) {
 		pthread_join(threads[i].thread_info, (void **)&(threads[i].ret));
-		printf("Exited: %d %lx\n", threads[i].tid, 
-				threads[i].ret);
+		printf("Exited: %d %d\n", threads[i].tid, threads[i].ret);
 	}
 	return 0;
 }

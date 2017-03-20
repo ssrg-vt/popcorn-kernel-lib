@@ -1,6 +1,9 @@
+#define _GNU_SOURCE
+#include <unistd.h>
 #include <sys/syscall.h>
 #include <fcntl.h>
 
+#ifdef POPCORN_X86
 struct regset_x86_64 {
 	/* Program counter/instruction pointer */
 	void* rip;
@@ -26,20 +29,40 @@ struct regset_x86_64 {
 	/* Flag register */
 	unsigned long rflags;
 };
+const int SYS_sched_migrate = 356;
 
+#elif defined(POPCORN_ARM)
+struct regset_aarch64 {
+	/* Stack pointer & program counter */
+	void* sp;
+	void* pc;
+
+	/* General purpose registers */
+	unsigned long x[31];
+
+	/* FPU/SIMD registers */
+	unsigned __int128 v[32];
+};
+const int SYS_sched_migrate = 285;
+#else
+#error No architecture is defined.
+#endif
 
 void popcorn_migrate_this(int nid)
 {
-	struct regset_x86_64 regs = {};
+	struct regset_aarch64 regs = {};
 	pid_t tid = syscall(SYS_gettid);
 
+#ifdef POPCORN_X86
 	asm volatile ("mov %%r15, %0" : "=r"(regs.r15));
 	asm volatile ("mov %%r14, %0" : "=r"(regs.r14));
 	asm volatile ("mov %%r13, %0" : "=r"(regs.r13));
 	asm volatile ("mov %%r12, %0" : "=r"(regs.r12));
 	asm volatile ("mov %%rbp, %0" : "=r"(regs.rbp));
 	asm volatile ("mov %%rbx, %0" : "=r"(regs.rbx));
+#elif defined(POPCORN_ARM)
+#endif
 
 	// regs.rip = loop;
-	syscall(356, tid, nid, &regs);
+	syscall(SYS_sched_migrate, tid, nid, &regs);
 }
