@@ -23,7 +23,7 @@ void loop(void)
 		for (i = 0; i < 1000000; i++) {
 			xx += i;
 		}
-		fd = open("/home/beowulf/x", O_RDONLY);
+		fd = open("/home/beowulf/share/ping", O_RDONLY);
 		if (fd < 0) {
 			printf("waiting for the file\n");
 			continue;
@@ -37,7 +37,7 @@ void loop(void)
 
 		if (jump) {
 			//printf("Jump!\n");
-			popcorn_migrate_this(0);
+			popcorn_migrate_this(value);
 		}
 	}
 }

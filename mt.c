@@ -8,6 +8,8 @@
 
 #include "popcorn.h"
 
+const int THREADS = 4;
+
 struct child_param {
 	pthread_t thread_info;
 	int tid;
@@ -42,13 +44,12 @@ void *child(void *arg)
 	pid_t pid = getpid();
 	pid_t tid = syscall(SYS_gettid);
 
-	param->tid = tid;
 	printf("Entering %d %d\n", pid, tid);
-	if (!param->local)
-		popcorn_migrate_this(0);
+	if (!param->local && param->tid < (THREADS / 2))
+		popcorn_migrate_this(1);
 	loop(tid);
 
-	if (!param->local)
+	if (!param->local && param->tid < (THREADS / 2))
 		popcorn_migrate_this(0);
 	printf("Exiting %d %d\n", pid, tid);
 
@@ -57,7 +58,6 @@ void *child(void *arg)
 
 int main(int argc, char *argv[])
 {
-	const int THREADS = 8;
 	struct child_param threads[THREADS];
 	int i;
 
