@@ -8,12 +8,14 @@
 
 #include "popcorn.h"
 
-const int THREADS = 4;
+const int THREADS = 6;
+const int NODES = 3;
+int local = 0;
 
 struct child_param {
 	pthread_t thread_info;
 	int tid;
-	int local;
+	int remote;
 	int ret;
 };
 
@@ -41,17 +43,16 @@ again:
 void *child(void *arg)
 {
 	struct child_param *param = (struct child_param *)arg;
-	pid_t pid = getpid();
 	pid_t tid = syscall(SYS_gettid);
 
-	printf("Entering %d %d\n", pid, tid);
-	if (!param->local && param->tid < (THREADS / 2))
-		popcorn_migrate_this(1);
+	printf("Entering %d to %d\n", tid, param->remote);
+	if (!local && param->remote != 0)
+		popcorn_migrate_this(param->remote);
 	loop(tid);
 
-	if (!param->local && param->tid < (THREADS / 2))
+	if (!local && param->remote != 0)
 		popcorn_migrate_this(0);
-	printf("Exiting %d %d\n", pid, tid);
+	printf("Exiting %d\n from %d", tid, param->remote);
 
 	return (void *)(unsigned long)tid;
 }
@@ -60,11 +61,13 @@ int main(int argc, char *argv[])
 {
 	struct child_param threads[THREADS];
 	int i;
+	int remote = 0;
+	local = (argc != 1);
 
 	for (i = 0; i < THREADS; i++) {
 		threads[i].tid = i;
 		threads[i].ret = 0;
-		threads[i].local = (argc != 1);
+		threads[i].remote = (remote++) % NODES;
 		int result = pthread_create(
 				&threads[i].thread_info, NULL, &child, threads + i);
 		//sleep(1);
@@ -72,7 +75,7 @@ int main(int argc, char *argv[])
 
 	for (i = 0; i < THREADS; i++) {
 		pthread_join(threads[i].thread_info, (void **)&(threads[i].ret));
-		printf("Exited: %d %d\n", threads[i].tid, threads[i].ret);
+		printf("Exited %d with %d\n", threads[i].tid, threads[i].ret);
 	}
 	return 0;
 }
