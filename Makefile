@@ -6,7 +6,7 @@ CFLAGS += -DDEBUG -g
 #CFLAGS += -DPOPCORN_SPARC
 
 LDFLAGS += -static -pthread
-TARGETS = basic mt ping
+TARGETS = basic mt ping demo
 
 all: $(TARGETS)
 
@@ -20,6 +20,9 @@ mt: mt.o popcorn.o
 	$(CC) $(LDFLAGS) -o $@ $^
 
 ping: ping.o popcorn.o
+	$(CC) $(LDFLAGS) -o $@ $^
+
+demo: demo.o popcorn.o
 	$(CC) $(LDFLAGS) -o $@ $^
 
 clean:
