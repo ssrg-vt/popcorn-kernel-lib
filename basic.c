@@ -26,7 +26,14 @@ void loop(void)
 
 int main(int argc, char *argv[])
 {
-	unsigned long rbp, rsp;
+	int migrate;
+	pid_t pid = getpid();
+
+	popcorn_propose_migration(pid, 1);
+
+	migrate = popcorn_migration_proposed();
+
+	printf("Migration is %sproposed\n", migrate ? "" : "not ");
 
 	if (argc == 1) {
 		printf("Migrate me!\n");

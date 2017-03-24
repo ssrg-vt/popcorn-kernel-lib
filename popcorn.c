@@ -4,6 +4,22 @@
 #include <fcntl.h>
 
 #ifdef POPCORN_X86
+#define SYSCALL_SCHED_MIGRATE	330
+#define SYSCALL_SCHED_PROPOSE_MIGRATION		331
+#define SYSCALL_SCHED_MIGRATION_PROPOSED	332
+#elif defined(POPCORN_ARM)
+#define SYSCALL_SCHED_MIGRATE	285
+#define SYSCALL_SCHED_PROPOSE_MIGRATION		286
+#define SYSCALL_SCHED_MIGRATION_PROPOSED	287
+#elif defined(POPCORN_PPC)
+#define SYSCALL_SCHED_MIGRATE	285
+#define SYSCALL_SCHED_PROPOSE_MIGRATION		286
+#define SYSCALL_SCHED_MIGRATION_PROPOSED	287
+#else
+#error No architecture is specified. Check the Makefile
+#endif
+
+#ifdef POPCORN_X86
 struct regset_x86_64 {
 	/* Program counter/instruction pointer */
 	void* rip;
@@ -29,7 +45,6 @@ struct regset_x86_64 {
 	/* Flag register */
 	unsigned long rflags;
 };
-const int SYS_sched_migrate = 356;
 
 #elif defined(POPCORN_ARM)
 struct regset_aarch64 {
@@ -43,14 +58,22 @@ struct regset_aarch64 {
 	/* FPU/SIMD registers */
 	unsigned __int128 v[32];
 };
-const int SYS_sched_migrate = 285;
 
 #elif defined(POPCORN_PPC)
 
-const int SYS_sched_migrate = 285;
 #else
 #error No architecture is specified. Check the Makefile
 #endif
+
+int popcorn_migration_proposed(void)
+{
+	return syscall(SYSCALL_SCHED_MIGRATION_PROPOSED);
+}
+
+int popcorn_propose_migration(pid_t tid, int nid)
+{
+	return syscall(SYSCALL_SCHED_PROPOSE_MIGRATION, tid, nid);
+}
 
 void popcorn_migrate_this(int nid)
 {
@@ -70,5 +93,5 @@ void popcorn_migrate_this(int nid)
 #endif
 
 	// regs.rip = loop;
-	syscall(SYS_sched_migrate, tid, nid, &regs);
+	syscall(SYSCALL_SCHED_MIGRATE, nid, &regs);
 }
