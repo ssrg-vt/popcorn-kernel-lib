@@ -1,11 +1,21 @@
 CC = gcc
 CFLAGS += -DDEBUG -g
-#CFLAGS += -DPOPCORN_X86
-#CFLAGS += -DPOPCORN_ARM
+
+ARCH=$(shell uname -m)
+
+ifeq ($(ARCH),x86_64)
+CFLAGS += -DPOPCORN_X86
+endif
+
+ifeq ($(ARCH),aarch64)
+CFLAGS += -DPOPCORN_ARM
+endif
+
 #CFLAGS += -DPOPCORN_PPC
 #CFLAGS += -DPOPCORN_SPARC
 
 LDFLAGS += -static -pthread
+
 TARGETS = basic mt ping demo
 
 all: $(TARGETS)
