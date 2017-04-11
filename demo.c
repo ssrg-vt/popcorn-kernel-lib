@@ -28,51 +28,62 @@ struct thread {
 };
 struct thread **threads;
 
-void busy(void)
+int make_busy(void)
 {
 	int i;
-	int xx = 0;
-	for (i = 0; i < 1000000; i++) {
-		xx += i;
+	int xx = 1;
+	for (i = 0; i < 10000; i++) {
+		xx *= 7;
 	}
+	return xx;
 }
 
 static int __get_location(int tid)
 {
+	return threads[tid]->at;
+}
+
+static int __put_location(int tid, int prev_nid, int nid)
+{
+#if 0
 	char path[80];
 	char buffer[80];
-	int at;
 	int fd;
 
-	sprintf(path, "%s/%d", PATH, tid);
-	do {
-		fd = open(path, O_RDONLY);
-		if (fd < 0) {
-			printf("waiting for the file %s\n", path);
-			sleep(1);
-			continue;
-		}
-	} while (fd < 0);
-	read(fd, buffer, sizeof(buffer));
-	at = atoi(buffer);
+	sprintf(path, "%s/%d-", PATH, tid);
+	sprintf(buffer, "%d --> %d", prev_nid, nid);
+
+	fd = open(path, O_CREAT | O_WRONLY | O_TRUNC, 0666);
+	write(fd, buffer, strlen(buffer));
 	close(fd);
-	return at;
+	sync();
+#endif
+
+	return 0;
 }
 
 static void *child(void *_thread)
 {
 	struct thread *thread = _thread;
+	int tid = thread->id;
 	int prev_nid = __get_location(thread->id);
 
 	//printf("Thread %d started from %d\n", thread->id, thread->at);
 
 	while (!thread->finish) {
 		int new_nid = __get_location(thread->id);
-		if (new_nid != prev_nid) {
-			prev_nid = new_nid;
+		__put_location(tid, prev_nid, new_nid);
+
+		if (prev_nid != new_nid) {
+			//printf("Move %d %d --> %d", thread->id, prev_nid, new_nid);
 			popcorn_migrate_this(new_nid);
+
+			if (new_nid == here) {
+				printf("Welcome back thread %d\n", tid);
+			}
 		}
-		sleep(1);
+		prev_nid = new_nid;
+		make_busy();
 	}
 
 	return 0;
@@ -113,8 +124,22 @@ static void __print_thread_status(void)
 	printf("\n");
 }
 
+
+static void __print_ps(void)
+{
+	char buffer[4096];
+	int fd = open("/proc/popcorn_ps", O_RDONLY);
+	read(fd, buffer, sizeof(buffer));
+	close(fd);
+
+	printf("%s\n", buffer);
+	return;
+}
+
+
 static int __write_to_control_file(int tid, int nid)
 {
+	return 0;
 	char path[80];
 	char value[10];
 	int fd;
@@ -131,13 +156,13 @@ static int __write_to_control_file(int tid, int nid)
 	write(fd, value, strlen(value));
 
 	close(fd);
+	sync();
 }
 
 static int __migrate_thread(int tid, int nid)
 {
-	__write_to_control_file(tid, nid);
-
 	threads[tid]->at = nid;
+
 	return 0;
 }
 
@@ -150,7 +175,7 @@ static int __init_thread_params(void)
 
 	for (i = 0; i < nthreads; i++) {
 		posix_memalign((void **)&(threads[i]), PAGE_SIZE, sizeof(struct thread));
-		//printf("%p\n", threads[i]);
+		printf("%d %p\n", i, threads[i]);
 	}
 }
 
@@ -160,6 +185,7 @@ int main(int argc, char *argv[])
 	int finish = 0;
 	struct thread *thread;
 	int opt;
+	int skip_print = 0;
 
 	while ((opt = getopt(argc, argv, "t:n:h:")) != -1) {
 		switch(opt) {
@@ -205,15 +231,23 @@ int main(int argc, char *argv[])
 		int from;
 		int ret;
 
-		__print_thread_status();
+		if (!skip_print) {
+			__print_thread_status();
+		}
+		skip_print = 0;
 
 		printf("Thread ID : ");
 		scanf("%d", &tid);
-		
-		if (tid == -1 || tid == 99) {
+
+		if (tid == -1 || tid == 999) {
 			break;
 		}
-		if (tid == 999) {
+		if (tid == 99) {
+			continue;
+		}
+		if (tid == 88) {
+			__print_ps();
+			skip_print = 1;
 			continue;
 		}
 		if (tid < 0 || tid >= nthreads) {
@@ -260,7 +294,7 @@ int main(int argc, char *argv[])
 	for (i = 0; i < nthreads; i++) {
 		thread = threads[i];
 		pthread_join(thread->thread_info, (void **)&(thread->ret));
-		// printf("Exited %d with %d\n", thread->id, thread->ret);
+		printf("Exited %d with %d\n", thread->id, thread->ret);
 	}
 
 	return 0;
