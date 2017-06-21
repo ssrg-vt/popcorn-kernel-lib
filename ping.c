@@ -36,8 +36,8 @@ void loop(void)
 		close(fd);
 
 		if (jump) {
-			//printf("Jump!\n");
-			popcorn_migrate_this(value);
+			printf("Jump!\n");
+			//popcorn_migrate_this(value);
 		}
 	}
 }

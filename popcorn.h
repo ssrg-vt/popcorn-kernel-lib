@@ -5,7 +5,7 @@
  * Migrate this thread to the node nid. if nid == -1, use the proposed
  * migration location.
  */
-void popcorn_migrate_this(int nid);
+void migrate(int nid, void (*callback)(void *), void *callback_param);
 
 
 /*

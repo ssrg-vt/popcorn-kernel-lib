@@ -9,6 +9,7 @@
 #include <sys/stat.h>
 #include <string.h>
 #include <fcntl.h>
+#include <pthread.h>
 
 #include "popcorn.h"
 
@@ -76,7 +77,7 @@ static void *child(void *_thread)
 
 		if (prev_nid != new_nid) {
 			//printf("Move %d %d --> %d", thread->id, prev_nid, new_nid);
-			popcorn_migrate_this(new_nid);
+			migrate(new_nid, NULL, NULL);
 
 			if (new_nid == here) {
 				printf("Welcome back thread %d\n", tid);
@@ -95,7 +96,7 @@ static void __print_thread_status(void)
 
 	printf("----+-");
 	for (i = 0; i < nthreads; i++) {
-		printf("----", threads[i]->at);
+		printf("----");
 	}
 	printf("\n");
 
@@ -107,7 +108,7 @@ static void __print_thread_status(void)
 
 	printf("----+-");
 	for (i = 0; i < nthreads; i++) {
-		printf("----", threads[i]->at);
+		printf("----");
 	}
 	printf("\n");
 
@@ -119,7 +120,7 @@ static void __print_thread_status(void)
 
 	printf("----+-");
 	for (i = 0; i < nthreads; i++) {
-		printf("----", threads[i]->at);
+		printf("----");
 	}
 	printf("\n");
 }
@@ -177,6 +178,7 @@ static int __init_thread_params(void)
 		posix_memalign((void **)&(threads[i]), PAGE_SIZE, sizeof(struct thread));
 		printf("%d %p\n", i, threads[i]);
 	}
+	return 0;
 }
 
 int main(int argc, char *argv[])
@@ -212,7 +214,6 @@ int main(int argc, char *argv[])
 	__init_thread_params();
 
 	for (i = 0; i < nthreads; i++) {
-		int ret;
 		thread = threads[i];
 
 		thread->id = i;
@@ -222,7 +223,7 @@ int main(int argc, char *argv[])
 
 		__write_to_control_file(i, here);
 
-		ret = pthread_create(&thread->thread_info, NULL, &child, thread);
+		pthread_create(&thread->thread_info, NULL, &child, thread);
 	}
 
 	while (!finish) {

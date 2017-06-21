@@ -47,11 +47,11 @@ void *child(void *arg)
 
 	printf("Entering %d to %d\n", tid, param->remote);
 	if (!local && param->remote != 0)
-		popcorn_migrate_this(param->remote);
+		migrate(1, NULL, NULL);
 	loop(tid);
 
 	if (!local && param->remote != 0)
-		popcorn_migrate_this(0);
+		migrate(0, NULL, NULL);
 	printf("Exiting %d\n from %d", tid, param->remote);
 
 	return (void *)(unsigned long)tid;
@@ -68,7 +68,7 @@ int main(int argc, char *argv[])
 		threads[i].tid = i;
 		threads[i].ret = 0;
 		threads[i].remote = (remote++) % NODES;
-		int result = pthread_create(
+		pthread_create(
 				&threads[i].thread_info, NULL, &child, threads + i);
 		//sleep(1);
 	}
