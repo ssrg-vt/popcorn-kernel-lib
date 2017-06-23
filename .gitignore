@@ -27,11 +27,12 @@
 *.i*86
 *.x86_64
 *.hex
-basic
-mt
-ping
-demo
 
 # Debug files
 *.dSYM/
 *.su
+
+basic
+mt
+pingpong
+demo

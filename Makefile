@@ -1,7 +1,7 @@
 LIBPOPCORN = libpopcorn.a
 
 CC = gcc
-CFLAGS += -DDEBUG -g -Wall
+CFLAGS += -DDEBUG -g -Wall -O0 # Higher -O may cause unexpected results
 
 ARCH=$(shell uname -m)
 

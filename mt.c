@@ -21,9 +21,8 @@ struct child_param {
 
 int loop(int tid)
 {
-	int i = 0;
-	char path[80] = {0};
-	char buffer[80] = {0};
+	char path[80];
+	char buffer[80];
 	int fd;
 
 again:
@@ -46,12 +45,9 @@ void *child(void *arg)
 	pid_t tid = syscall(SYS_gettid);
 
 	printf("Entering %d to %d\n", tid, param->remote);
-	if (!local && param->remote != 0)
-		migrate(1, NULL, NULL);
+	migrate(1, NULL, NULL);
 	loop(tid);
-
-	if (!local && param->remote != 0)
-		migrate(0, NULL, NULL);
+	migrate(0, NULL, NULL);
 	printf("Exiting %d\n from %d", tid, param->remote);
 
 	return (void *)(unsigned long)tid;
