@@ -18,7 +18,7 @@ endif
 LDFLAGS += -static -pthread -L.
 LIBS += -l:$(LIBPOPCORN)
 
-TARGETS = $(LIBPOPCORN) basic ping demo
+TARGETS = $(LIBPOPCORN) basic pingpong demo
 
 all: $(TARGETS)
 
@@ -31,7 +31,7 @@ libpopcorn.a: popcorn.o
 basic : basic.o
 	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
 
-ping: ping.o
+pingpong: pingpong.o
 	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
 
 demo: demo.o
