@@ -1,6 +1,7 @@
 #!/bin/bash
 APPS_PATH="~/popcorn-apps"
 APP="mt"
+HETERO_PATH="/home/beowulf/share/hetero"
 
 LOAD=1
 MSG_LAYER_MOD="msg_loopback.ko"
@@ -30,6 +31,19 @@ do
 		MSG_LAYER_MOD="msg_socket.ko"
 		MSG_LAYER_NAME="socket"
 		EXEC=0
+		shift
+		;;
+	cp)
+		if [[ $ARCH == "arm64" ]]; then
+			echo "arm"
+			cp $HETERO_PATH/test_aarch64 $HETERO_PATH/test_x86-64 .
+			cp test_aarch64 test
+		else
+			echo "x86"
+			cp $HETERO_PATH/test_aarch64 $HETERO_PATH/test_x86-64 .
+			cp test_x86-64 test
+		fi
+		exit 0
 		shift
 		;;
 	*)

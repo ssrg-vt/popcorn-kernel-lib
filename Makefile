@@ -1,39 +1,41 @@
+LIBPOPCORN = libpopcorn.a
+
 CC = gcc
-CFLAGS += -DDEBUG -g
+CFLAGS += -DDEBUG -g -Wall
 
 ARCH=$(shell uname -m)
 
 ifeq ($(ARCH),x86_64)
 CFLAGS += -DPOPCORN_X86
 endif
-
-ifeq ($(ARCH),aarch64)
+ifeq ($(ARCH),arm64)
 CFLAGS += -DPOPCORN_ARM
 endif
 
 #CFLAGS += -DPOPCORN_PPC
 #CFLAGS += -DPOPCORN_SPARC
 
-LDFLAGS += -static -pthread
+LDFLAGS += -static -pthread -L.
+LIBS += -l:$(LIBPOPCORN)
 
-TARGETS = basic mt ping demo
+TARGETS = $(LIBPOPCORN) basic ping demo
 
 all: $(TARGETS)
 
 %.o: %.c
 	$(CC) -c $(CFLAGS) $^ -o $@
 
-basic : basic.o popcorn.o
-	$(CC) $(LDFLAGS) -o $@ $^
+libpopcorn.a: popcorn.o
+	ar -cq $@ $^
 
-mt: mt.o popcorn.o
-	$(CC) $(LDFLAGS) -o $@ $^
+basic : basic.o
+	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
 
-ping: ping.o popcorn.o
-	$(CC) $(LDFLAGS) -o $@ $^
+ping: ping.o
+	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
 
-demo: demo.o popcorn.o
-	$(CC) $(LDFLAGS) -o $@ $^
+demo: demo.o
+	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
 
 clean:
-	rm -f $(TARGETS) *.o [0-9]*
+	rm -f $(TARGETS) *.o
