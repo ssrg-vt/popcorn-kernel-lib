@@ -8,7 +8,7 @@ ARCH=$(shell uname -m)
 ifeq ($(ARCH),x86_64)
 CFLAGS += -DPOPCORN_X86
 endif
-ifeq ($(ARCH),arm64)
+ifeq ($(ARCH),aarch64)
 CFLAGS += -DPOPCORN_ARM
 endif
 

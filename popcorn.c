@@ -150,6 +150,7 @@ void migrate(int nid, void (*callback_fn)(void *), void *callback_args)
 	);
 
 migrated:
+	asm volatile ("" ::: "memory");
 	SET_XMM_REGISTER(0);
 	SET_XMM_REGISTER(1);
 	SET_XMM_REGISTER(2);
@@ -171,11 +172,14 @@ migrated:
 	return;
 }
 
+
 #elif defined(POPCORN_ARM)
 #define GET_REGISTER(r) \
-		asm volatile ("str x"#r", %0" : "=r"(regs.x[r]))
+		asm volatile ("str x"#r", %0" : "=m"(regs.x[r]))
 #define GET_FP_REGISTER(r) \
-		asm volatile ("str q"#r", %0" : "=r"(regs.v[r]))
+		asm volatile ("str q"#r", %0" : "=m"(regs.v[r]))
+#define SET_FP_REGISTER(r) \
+		asm volatile ("ldr q"#r", %0" : "=m"(regs.v[r]))
 
 void migrate(int nid, void (*callback_fn)(void *), void *callback_args)
 {
@@ -213,41 +217,101 @@ void migrate(int nid, void (*callback_fn)(void *), void *callback_args)
 	GET_REGISTER(29);
 	GET_REGISTER(30);
 
-	GET_FP_REGISTER(0); 
-	GET_FP_REGISTER(1); 
-	GET_FP_REGISTER(2); 
-	GET_FP_REGISTER(3); 
-	GET_FP_REGISTER(4); 
-	GET_FP_REGISTER(5); 
-	GET_FP_REGISTER(6); 
-	GET_FP_REGISTER(7); 
-	GET_FP_REGISTER(8); 
-	GET_FP_REGISTER(9); 
-	GET_FP_REGISTER(10); 
-	GET_FP_REGISTER(11); 
-	GET_FP_REGISTER(12); 
-	GET_FP_REGISTER(13); 
-	GET_FP_REGISTER(14); 
-	GET_FP_REGISTER(15); 
-	GET_FP_REGISTER(16); 
-	GET_FP_REGISTER(17); 
-	GET_FP_REGISTER(18); 
-	GET_FP_REGISTER(19); 
-	GET_FP_REGISTER(20); 
-	GET_FP_REGISTER(21); 
-	GET_FP_REGISTER(22); 
-	GET_FP_REGISTER(23); 
-	GET_FP_REGISTER(24); 
-	GET_FP_REGISTER(25); 
-	GET_FP_REGISTER(26); 
-	GET_FP_REGISTER(27); 
-	GET_FP_REGISTER(28); 
-	GET_FP_REGISTER(29); 
-	GET_FP_REGISTER(30); 
-	GET_FP_REGISTER(31); 
+	GET_FP_REGISTER(0);
+	GET_FP_REGISTER(1);
+	GET_FP_REGISTER(2);
+	GET_FP_REGISTER(3);
+	GET_FP_REGISTER(4);
+	GET_FP_REGISTER(5);
+	GET_FP_REGISTER(6);
+	GET_FP_REGISTER(7);
+	GET_FP_REGISTER(8);
+	GET_FP_REGISTER(9);
+	GET_FP_REGISTER(10);
+	GET_FP_REGISTER(11);
+	GET_FP_REGISTER(12);
+	GET_FP_REGISTER(13);
+	GET_FP_REGISTER(14);
+	GET_FP_REGISTER(15);
+	GET_FP_REGISTER(16);
+	GET_FP_REGISTER(17);
+	GET_FP_REGISTER(18);
+	GET_FP_REGISTER(19);
+	GET_FP_REGISTER(20);
+	GET_FP_REGISTER(21);
+	GET_FP_REGISTER(22);
+	GET_FP_REGISTER(23);
+	GET_FP_REGISTER(24);
+	GET_FP_REGISTER(25);
+	GET_FP_REGISTER(26);
+	GET_FP_REGISTER(27);
+	GET_FP_REGISTER(28);
+	GET_FP_REGISTER(29);
+	GET_FP_REGISTER(30);
+	GET_FP_REGISTER(31);
 
-	//asm volatile ("mov x15, sp; str x15, %0;" : "=m"(regs.sp) : : "x15");
-	//asm volatile ("mov x15, #.; str x15, %0;" : "=m"(regs.pc) : : "x15");
+	/* SP */
+	asm volatile (
+			"mov x15, sp;"
+			"str x15, %0;"
+		: "=m"(regs.sp)
+		:
+		: "x15"
+	);
+	/* PC */
+	asm volatile (
+			"mov x15, %1;"
+			"str x15, %0;"
+		: "=m"(regs.pc)
+		: "r"(&&migrated)
+		: "x15"
+	);
+
+	/* SYSCALL */
+	asm volatile (
+			"mov w0, %w0;"
+			"mov x1, %1;"
+			"mov x8, %2;"
+			"svc 0;"
+		:
+		: "r"(nid), "r"(&regs), "i"(SYSCALL_SCHED_MIGRATE)
+		: "w0", "x1", "x8"
+	);
+
+migrated:
+	asm volatile ("" ::: "memory");
+	SET_FP_REGISTER(0);
+	SET_FP_REGISTER(1);
+	SET_FP_REGISTER(2);
+	SET_FP_REGISTER(3);
+	SET_FP_REGISTER(4);
+	SET_FP_REGISTER(5);
+	SET_FP_REGISTER(6);
+	SET_FP_REGISTER(7);
+	SET_FP_REGISTER(8);
+	SET_FP_REGISTER(9);
+	SET_FP_REGISTER(10);
+	SET_FP_REGISTER(11);
+	SET_FP_REGISTER(12);
+	SET_FP_REGISTER(13);
+	SET_FP_REGISTER(14);
+	SET_FP_REGISTER(15);
+	SET_FP_REGISTER(16);
+	SET_FP_REGISTER(17);
+	SET_FP_REGISTER(18);
+	SET_FP_REGISTER(19);
+	SET_FP_REGISTER(20);
+	SET_FP_REGISTER(21);
+	SET_FP_REGISTER(22);
+	SET_FP_REGISTER(23);
+	SET_FP_REGISTER(24);
+	SET_FP_REGISTER(25);
+	SET_FP_REGISTER(26);
+	SET_FP_REGISTER(27);
+	SET_FP_REGISTER(28);
+	SET_FP_REGISTER(29);
+	SET_FP_REGISTER(30);
+	SET_FP_REGISTER(31);
 
 	if (callback_fn) callback_fn(callback_args);
 	return;
