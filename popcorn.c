@@ -78,6 +78,9 @@ int popcorn_propose_migration(pid_t tid, int nid)
 	return syscall(SYSCALL_SCHED_PROPOSE_MIGRATION, tid, nid);
 }
 
+#ifdef WAIT_FOR_DEBUGGER
+int __wait_for_debugger = 1;
+#endif
 
 #ifdef POPCORN_X86
 #define GET_REGISTER(x) \
@@ -151,6 +154,10 @@ void migrate(int nid, void (*callback_fn)(void *), void *callback_args)
 
 migrated:
 	asm volatile ("" ::: "memory");
+#ifdef WAIT_FOR_DEBUGGER
+	while (__wait_for_debugger);
+#endif
+
 	SET_XMM_REGISTER(0);
 	SET_XMM_REGISTER(1);
 	SET_XMM_REGISTER(2);
