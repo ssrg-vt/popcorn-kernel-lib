@@ -18,9 +18,11 @@ endif
 LDFLAGS += -static -pthread -L.
 LIBS += -l:$(LIBPOPCORN)
 
-TARGETS = $(LIBPOPCORN) basic pingpong demo
+TARGETS = $(LIBPOPCORN)
+EXAMPLES = basic pingpong demo
+OBJDUMPS = basic.asm demo.asm
 
-all: $(TARGETS)
+all: $(TARGETS) $(EXAMPLES) $(OBJDUMPS)
 
 %.o: %.c
 	$(CC) -c $(CFLAGS) $^ -o $@
@@ -31,11 +33,17 @@ libpopcorn.a: popcorn.o
 basic : basic.o
 	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
 
+basic.asm: basic
+	objdump -d $< > $@
+
 pingpong: pingpong.o
 	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
 
 demo: demo.o
 	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
+
+demo.asm: demo
+	objdump -d $< > $@
 
 clean:
 	rm -f $(TARGETS) *.o
