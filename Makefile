@@ -1,54 +1,15 @@
-LIBPOPCORN = libpopcorn.a
+.PHONY: all lib src
+all: lib src
 
-CC = gcc
-# Higher -O may cause unexpected results
-CFLAGS += -O0
+lib:
+	@echo "[LIB]"
+	@make -C lib all
+	
+src:
+	@echo "[SRC]"
+	@make -C src all
 
-ARCH=$(shell uname -m)
-
-ifeq ($(ARCH),x86_64)
-CFLAGS += -DPOPCORN_X86
-endif
-ifeq ($(ARCH),aarch64)
-CFLAGS += -DPOPCORN_ARM
-endif
-
-#CFLAGS += -DPOPCORN_PPC
-#CFLAGS += -DPOPCORN_SPARC
-
-# Features
-CFLAGS += -DDEBUG -g -Wall
-#CFLAGS += -DWAIT_FOR_DEBUGGER
-
-LDFLAGS += -static -pthread -L.
-LIBS += -l:$(LIBPOPCORN)
-
-TARGETS = $(LIBPOPCORN)
-EXAMPLES = basic pingpong demo
-OBJDUMPS = basic.asm demo.asm
-
-all: $(TARGETS) $(EXAMPLES) $(OBJDUMPS)
-
-%.o: %.c
-	$(CC) -c $(CFLAGS) $^ -o $@
-
-libpopcorn.a: popcorn.o
-	ar -cq $@ $^
-
-basic : basic.o
-	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
-
-basic.asm: basic
-	objdump -d $< > $@
-
-pingpong: pingpong.o
-	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
-
-demo: demo.o
-	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
-
-demo.asm: demo
-	objdump -d $< > $@
-
+.PHONY: clean
 clean:
-	rm -f $(TARGETS) $(EXAMPLES) $(OBJDUMPS) *.o
+	@make -C lib clean
+	@make -C src clean
