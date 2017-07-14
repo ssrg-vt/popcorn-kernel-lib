@@ -5,6 +5,7 @@
 #include <pthread.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 #ifdef POPCORN_X86
 #define SYSCALL_SCHED_MIGRATE	330
@@ -86,13 +87,17 @@ int __wait_for_debugger = 1;
 #define GET_REGISTER(x) \
 		asm volatile ("mov %%"#x", %0" : "=m"(regs.x))
 #define GET_XMM_REGISTER(x) \
-		asm volatile ("movsd %%xmm"#x", %0" : "=m"(regs.xmm[x]))
+		asm volatile ("vmovdqu %%xmm"#x", %0" : "=m"(regs.xmm[x]))
 #define SET_XMM_REGISTER(x) \
-		asm volatile ("movsd %0, %%xmm"#x :: "m"(regs.xmm[x]))
+		asm volatile ("vmovdqu %0, %%xmm"#x :: "m"(regs.xmm[x]))
 
 void migrate(int nid, void (*callback_fn)(void *), void *callback_args)
 {
 	struct regset_x86_64 regs;
+
+#ifdef DEBUG
+	memset(&regs, 0xcd, sizeof(regs));
+#endif
 
 	GET_REGISTER(rax);
 	GET_REGISTER(rdx);

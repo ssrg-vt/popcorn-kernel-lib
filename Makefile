@@ -1,7 +1,8 @@
 LIBPOPCORN = libpopcorn.a
 
 CC = gcc
-CFLAGS += -DDEBUG -g -Wall -O0 # Higher -O may cause unexpected results
+# Higher -O may cause unexpected results
+CFLAGS += -O0
 
 ARCH=$(shell uname -m)
 
@@ -14,6 +15,10 @@ endif
 
 #CFLAGS += -DPOPCORN_PPC
 #CFLAGS += -DPOPCORN_SPARC
+
+# Features
+CFLAGS += -DDEBUG -g -Wall
+#CFLAGS += -DWAIT_FOR_DEBUGGER
 
 LDFLAGS += -static -pthread -L.
 LIBS += -l:$(LIBPOPCORN)
@@ -46,4 +51,4 @@ demo.asm: demo
 	objdump -d $< > $@
 
 clean:
-	rm -f $(TARGETS) *.o
+	rm -f $(TARGETS) $(EXAMPLES) $(OBJDUMPS) *.o
