@@ -1,4 +1,6 @@
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,30 +15,37 @@
 
 #include "popcorn.h"
 
-const char * const PATH = "/home/beowulf/share/demo";
-const int PAGE_SIZE = 4096;
-
 int nthreads = 16;
-int nodes = 4;
+int nodes = 3;
 int here = 0;
+int check_stall = 1;
+unsigned long *global;
+pthread_barrier_t barrier_start;
 
 struct thread {
 	pthread_t thread_info;
 	int id;
+	int tid;
 	int at;
 	int ret;
 	int finish;
+	int count;
 };
 struct thread **threads;
+struct thread stall_monitor;
 
-int make_busy(void)
+int make_busy(int tid, struct thread *t)
 {
+	/*
 	int i;
 	int xx = 1;
 	for (i = 0; i < 10000; i++) {
 		xx *= 7;
 	}
-	return xx;
+	*/
+	t[tid].count++;
+	global[tid]++;
+	return t->count;
 }
 
 static int __get_location(int tid)
@@ -44,36 +53,17 @@ static int __get_location(int tid)
 	return threads[tid]->at;
 }
 
-static int __put_location(int tid, int prev_nid, int nid)
-{
-#if 0
-	char path[80];
-	char buffer[80];
-	int fd;
-
-	sprintf(path, "%s/%d-", PATH, tid);
-	sprintf(buffer, "%d --> %d", prev_nid, nid);
-
-	fd = open(path, O_CREAT | O_WRONLY | O_TRUNC, 0666);
-	write(fd, buffer, strlen(buffer));
-	close(fd);
-	sync();
-#endif
-
-	return 0;
-}
-
-static void *child(void *_thread)
+static void *child_thread(void *_thread)
 {
 	struct thread *thread = _thread;
 	int tid = thread->id;
 	int prev_nid = __get_location(thread->id);
+	thread->tid = syscall(SYS_gettid);
 
-	//printf("Thread %d started from %d\n", thread->id, thread->at);
+	pthread_barrier_wait(&barrier_start);
 
 	while (!thread->finish) {
 		int new_nid = __get_location(thread->id);
-		__put_location(tid, prev_nid, new_nid);
 
 		if (prev_nid != new_nid) {
 			//printf("Move %d %d --> %d", thread->id, prev_nid, new_nid);
@@ -84,7 +74,7 @@ static void *child(void *_thread)
 			}
 		}
 		prev_nid = new_nid;
-		make_busy();
+		make_busy(tid, thread);
 	}
 
 	return 0;
@@ -138,26 +128,13 @@ static void __print_ps(void)
 }
 
 
-static int __write_to_control_file(int tid, int nid)
+static void __print_heartbeats(void)
 {
-	return 0;
-	char path[80];
-	char value[10];
-	int fd;
-
-	sprintf(path, "%s/%d", PATH, tid);
-	sprintf(value, "%d", nid);
-
-	fd = open(path, O_CREAT | O_WRONLY | O_TRUNC, 0666);
-	if (fd < 0) {
-		fprintf(stderr, "ERROR: Cannot open control file at %s (%d)\n",
-				path, errno);
-		return -errno;
+	int i;
+	for (i = 0; i < nthreads; i++) {
+		printf("%3ld ", (global[i] / 1000) % 1000);
 	}
-	write(fd, value, strlen(value));
-
-	close(fd);
-	sync();
+	printf("\n");
 }
 
 static int __migrate_thread(int tid, int nid)
@@ -170,16 +147,41 @@ static int __migrate_thread(int tid, int nid)
 
 static int __init_thread_params(void)
 {
+	const int PAGE_SIZE = 4096;
 	int i;
 	threads = (struct thread **)malloc(sizeof(struct thread *) * nthreads);
-	printf("%p\n", threads);
+	global = (unsigned long *)malloc(sizeof(unsigned long) * nthreads);
 
 	for (i = 0; i < nthreads; i++) {
+		global[i] = 0;
 		posix_memalign((void **)&(threads[i]), PAGE_SIZE, sizeof(struct thread));
-		printf("%d %p\n", i, threads[i]);
 	}
+
+	pthread_barrier_init(&barrier_start, NULL, nthreads + 1);
 	return 0;
 }
+
+static void *stall_monitor_thread(void *arg)
+{
+	unsigned long *last = 
+		(unsigned long *)malloc(sizeof(unsigned long) * nthreads);
+
+	while (!stall_monitor.finish) {
+		int i;
+		sleep(2);
+		for (i = 0; i < nthreads; i++) {
+			if (last[i] == global[i]) {
+				fprintf(stderr, "Thread %d might be stalled %d\n", i,
+						threads[i]->tid);
+			}
+			last[i] = global[i];
+		}
+	}
+	free(last);
+
+	return NULL;
+}
+
 
 int main(int argc, char *argv[])
 {
@@ -189,7 +191,7 @@ int main(int argc, char *argv[])
 	int opt;
 	int skip_print = 0;
 
-	while ((opt = getopt(argc, argv, "t:n:h:")) != -1) {
+	while ((opt = getopt(argc, argv, "t:n:h:D")) != -1) {
 		switch(opt) {
 		case 't':
 			nthreads = atoi(optarg);
@@ -199,6 +201,9 @@ int main(int argc, char *argv[])
 			break;
 		case 'h':
 			here = atoi(optarg);
+			break;
+		case 'D':
+			check_stall = 0;
 			break;
 		}
 	}
@@ -217,15 +222,26 @@ int main(int argc, char *argv[])
 		thread = threads[i];
 
 		thread->id = i;
+		thread->tid = 0;
 		thread->at = here;
 		thread->ret = 0;
+		thread->count = 0;
 		thread->finish = 0;
 
-		__write_to_control_file(i, here);
-
-		pthread_create(&thread->thread_info, NULL, &child, thread);
+		pthread_create(&thread->thread_info, NULL, &child_thread, thread);
+	}
+	if (check_stall) {
+		stall_monitor.finish = 0;
+		pthread_create(&stall_monitor.thread_info, NULL, &stall_monitor_thread, &stall_monitor);
 	}
 
+	pthread_barrier_wait(&barrier_start);
+	for (i = 0; i < nthreads; i++) {
+		printf("Thread %2d [%d] created at %p\n", i, threads[i]->tid, threads[i]);
+	}
+
+
+	/* Main loop */
 	while (!finish) {
 		int tid;
 		int to;
@@ -248,6 +264,11 @@ int main(int argc, char *argv[])
 		}
 		if (tid == 88) {
 			__print_ps();
+			skip_print = 1;
+			continue;
+		}
+		if (tid == 77) {
+			__print_heartbeats();
 			skip_print = 1;
 			continue;
 		}
@@ -285,18 +306,26 @@ int main(int argc, char *argv[])
 		}
 	}
 
+	/* Clean up */
+	if (check_stall) {
+		stall_monitor.finish = 1;
+		pthread_join(stall_monitor.thread_info, (void **)&(stall_monitor.ret));
+	}
+
 	for (i = 0; i < nthreads; i++) {
 		if (threads[i]->at != here) {
 			__migrate_thread(i, here);
 		}
 		threads[i]->finish = 1;
 	}
-
 	for (i = 0; i < nthreads; i++) {
 		thread = threads[i];
 		pthread_join(thread->thread_info, (void **)&(thread->ret));
 		printf("Exited %d with %d\n", thread->id, thread->ret);
+		free(thread);
 	}
+	free(threads);
+	free(global);
 
 	return 0;
 }
