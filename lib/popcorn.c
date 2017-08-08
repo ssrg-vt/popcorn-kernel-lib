@@ -122,7 +122,7 @@ void migrate(int nid, void (*callback_fn)(void *), void *callback_args)
 	GET_REGISTER(es);
 	GET_REGISTER(fs);
 	GET_REGISTER(gs);
-	asm volatile ("pushf; pop %0" : "=m"(regs.rflags));
+	asm volatile ("pushfq; popq %0" : "=m"(regs.rflags));
 
 	GET_XMM_REGISTER(0);
 	GET_XMM_REGISTER(1);
@@ -146,6 +146,7 @@ void migrate(int nid, void (*callback_fn)(void *), void *callback_args)
 		: "=m"(regs.rip)
 		: "i"(&&migrated)
 	);
+	asm volatile ("mfence" ::: "memory");
 
 	asm volatile (
 			"mov %0, %%edi;"
@@ -158,7 +159,7 @@ void migrate(int nid, void (*callback_fn)(void *), void *callback_args)
 	);
 
 migrated:
-	asm volatile ("" ::: "memory");
+	asm volatile ("mfence" ::: "memory");
 #ifdef WAIT_FOR_DEBUGGER
 	while (__wait_for_debugger);
 #endif
