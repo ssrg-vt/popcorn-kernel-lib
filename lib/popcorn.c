@@ -7,23 +7,23 @@
 #include <stdio.h>
 #include <string.h>
 
-#ifdef POPCORN_X86
+#ifdef __x86_64__
 #define SYSCALL_SCHED_MIGRATE	330
 #define SYSCALL_SCHED_PROPOSE_MIGRATION		331
 #define SYSCALL_SCHED_MIGRATION_PROPOSED	332
-#elif defined(POPCORN_ARM)
+#elif __aarch64__
 #define SYSCALL_SCHED_MIGRATE	285
 #define SYSCALL_SCHED_PROPOSE_MIGRATION		286
 #define SYSCALL_SCHED_MIGRATION_PROPOSED	287
-#elif defined(POPCORN_PPC)
+#elif __powerpc64__
 #define SYSCALL_SCHED_MIGRATE	285
 #define SYSCALL_SCHED_PROPOSE_MIGRATION		286
 #define SYSCALL_SCHED_MIGRATION_PROPOSED	287
 #else
-#error No architecture is specified. Check the Makefile
+#error Does not support this architecture
 #endif
 
-#ifdef POPCORN_X86
+#ifdef __x86_64__
 struct regset_x86_64 {
 	/* Program counter/instruction pointer */
 	void* rip;
@@ -50,7 +50,7 @@ struct regset_x86_64 {
 	unsigned long rflags;
 };
 
-#elif defined(POPCORN_ARM)
+#elif __aarch64__
 struct regset_aarch64 {
 	/* Stack pointer & program counter */
 	void* sp;
@@ -63,8 +63,18 @@ struct regset_aarch64 {
 	unsigned __int128 v[32];
 };
 
-#elif defined(POPCORN_PPC)
-
+#elif __powerpc64__
+struct regset_ppc {
+	unsigned long gpr[32];
+	unsigned long nip;
+	unsigned long msr;
+	unsigned long orig_gpr3;	/* Used for restarting system calls */
+	unsigned long ctr;
+	unsigned long link;
+	unsigned long xer;
+	unsigned long ccr;
+	unsigned long softe;		/* Soft enabled/disabled */
+};
 #else
 #error No architecture is specified. Check the Makefile
 #endif
@@ -83,7 +93,7 @@ int popcorn_propose_migration(pid_t tid, int nid)
 int __wait_for_debugger = 1;
 #endif
 
-#ifdef POPCORN_X86
+#ifdef __x86_64__
 #define GET_REGISTER(x) \
 		asm volatile ("mov %%"#x", %0" : "=m"(regs.x))
 #define GET_XMM_REGISTER(x) \
@@ -186,7 +196,7 @@ migrated:
 }
 
 
-#elif defined(POPCORN_ARM)
+#elif __aarch64__
 #define GET_REGISTER(r) \
 		asm volatile ("str x"#r", %0" : "=m"(regs.x[r]))
 #define GET_FP_REGISTER(r) \
@@ -197,6 +207,10 @@ migrated:
 void migrate(int nid, void (*callback_fn)(void *), void *callback_args)
 {
 	struct regset_aarch64 regs;
+
+#ifdef DEBUG
+	memset(&regs, 0xcd, sizeof(regs));
+#endif
 
 	GET_REGISTER(0);
 	GET_REGISTER(1);
@@ -262,7 +276,6 @@ void migrate(int nid, void (*callback_fn)(void *), void *callback_args)
 	GET_FP_REGISTER(29);
 	GET_FP_REGISTER(30);
 	GET_FP_REGISTER(31);
-
 	/* SP */
 	asm volatile (
 			"mov x15, sp;"
@@ -293,6 +306,10 @@ void migrate(int nid, void (*callback_fn)(void *), void *callback_args)
 
 migrated:
 	asm volatile ("" ::: "memory");
+#ifdef WAIT_FOR_DEBUGGER
+	while (__wait_for_debugger);
+#endif
+
 	SET_FP_REGISTER(0);
 	SET_FP_REGISTER(1);
 	SET_FP_REGISTER(2);
@@ -325,6 +342,28 @@ migrated:
 	SET_FP_REGISTER(29);
 	SET_FP_REGISTER(30);
 	SET_FP_REGISTER(31);
+
+	if (callback_fn) callback_fn(callback_args);
+	return;
+}
+
+#elif __powerpc64__
+void migrate(int nid, void (*callback_fn)(void *), void *callback_args)
+{
+	struct regset_ppc regs;
+
+#ifdef DEBUG
+	memset(&regs, 0xcd, sizeof(regs));
+#endif
+
+	/* Get registers */
+	/* Invoke the system call */
+
+migrate:
+	asm volatile ("" ::: "memory");
+#ifdef WAIT_FOR_DEBUGGER
+	while (__wait_for_debugger);
+#endif
 
 	if (callback_fn) callback_fn(callback_args);
 	return;
