@@ -17,7 +17,7 @@
 #elif __aarch64__
 #define GET_RBP(rbp) asm volatile ("str x29, %0" : "=m"(rbp))
 #elif __powerpc64__
-#define GET_RBP(rbp) asm volatile ("std r10, %0" : "=m"(rbp))
+#define GET_RBP(rbp) asm volatile ("mflr 22; std 22, %0" : "=m"(rbp): : "r22")
 #else
 #error Does not support this architecture
 #endif

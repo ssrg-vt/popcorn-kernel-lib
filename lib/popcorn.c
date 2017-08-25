@@ -16,9 +16,9 @@
 #define SYSCALL_SCHED_PROPOSE_MIGRATION		286
 #define SYSCALL_SCHED_MIGRATION_PROPOSED	287
 #elif __powerpc64__
-#define SYSCALL_SCHED_MIGRATE	285
-#define SYSCALL_SCHED_PROPOSE_MIGRATION		286
-#define SYSCALL_SCHED_MIGRATION_PROPOSED	287
+#define SYSCALL_SCHED_MIGRATE	379
+#define SYSCALL_SCHED_PROPOSE_MIGRATION		380
+#define SYSCALL_SCHED_MIGRATION_PROPOSED	381
 #else
 #error Does not support this architecture
 #endif
@@ -65,14 +65,17 @@ struct regset_aarch64 {
 
 #elif __powerpc64__
 struct regset_ppc {
-	unsigned long gpr[32];
 	unsigned long nip;
 	unsigned long msr;
-	unsigned long orig_gpr3;	/* Used for restarting system calls */
 	unsigned long ctr;
 	unsigned long link;
 	unsigned long xer;
 	unsigned long ccr;
+
+	unsigned long gpr[32];
+	unsigned long fpr[32];
+
+	unsigned long orig_gpr3;	/* Used for restarting system calls */
 	unsigned long softe;		/* Soft enabled/disabled */
 };
 #else
@@ -348,6 +351,13 @@ migrated:
 }
 
 #elif __powerpc64__
+#define GET_REGISTER(r) \
+		asm volatile ("std "#r", %0" : "=m"(regs.gpr[r]))
+#define GET_FP_REGISTER(r) \
+		asm volatile ("stfd "#r", %0" : "=m"(regs.fpr[r]))
+#define SET_FP_REGISTER(r) \
+		asm volatile ("lfd "#r", %0" : : "m"(regs.fpr[r]))
+
 void migrate(int nid, void (*callback_fn)(void *), void *callback_args)
 {
 	struct regset_ppc regs;
@@ -356,14 +366,145 @@ void migrate(int nid, void (*callback_fn)(void *), void *callback_args)
 	memset(&regs, 0xcd, sizeof(regs));
 #endif
 
-	/* Get registers */
-	/* Invoke the system call */
+	GET_REGISTER(0);
+	GET_REGISTER(1);
+	GET_REGISTER(2);
+	GET_REGISTER(3);
+	GET_REGISTER(4);
+	GET_REGISTER(5);
+	GET_REGISTER(6);
+	GET_REGISTER(7);
+	GET_REGISTER(8);
+	GET_REGISTER(9);
+	GET_REGISTER(10);
+	GET_REGISTER(11);
+	GET_REGISTER(12);
+	GET_REGISTER(13);
+	GET_REGISTER(14);
+	GET_REGISTER(15);
+	GET_REGISTER(16);
+	GET_REGISTER(17);
+	GET_REGISTER(18);
+	GET_REGISTER(19);
+	GET_REGISTER(20);
+	GET_REGISTER(21);
+	GET_REGISTER(22);
+	GET_REGISTER(23);
+	GET_REGISTER(24);
+	GET_REGISTER(25);
+	GET_REGISTER(26);
+	GET_REGISTER(27);
+	GET_REGISTER(28);
+	GET_REGISTER(29);
+	GET_REGISTER(30);
+	GET_REGISTER(31);
+	GET_FP_REGISTER(0);
+	GET_FP_REGISTER(1);
+	GET_FP_REGISTER(2);
+	GET_FP_REGISTER(3);
+	GET_FP_REGISTER(4);
+	GET_FP_REGISTER(5);
+	GET_FP_REGISTER(6);
+	GET_FP_REGISTER(7);
+	GET_FP_REGISTER(8);
+	GET_FP_REGISTER(9);
+	GET_FP_REGISTER(10);
+	GET_FP_REGISTER(11);
+	GET_FP_REGISTER(12);
+	GET_FP_REGISTER(13);
+	GET_FP_REGISTER(14);
+	GET_FP_REGISTER(15);
+	GET_FP_REGISTER(16);
+	GET_FP_REGISTER(17);
+	GET_FP_REGISTER(18);
+	GET_FP_REGISTER(19);
+	GET_FP_REGISTER(20);
+	GET_FP_REGISTER(21);
+	GET_FP_REGISTER(22);
+	GET_FP_REGISTER(23);
+	GET_FP_REGISTER(24);
+	GET_FP_REGISTER(25);
+	GET_FP_REGISTER(26);
+	GET_FP_REGISTER(27);
+	GET_FP_REGISTER(28);
+	GET_FP_REGISTER(29);
+	GET_FP_REGISTER(30);
+	GET_FP_REGISTER(31);
 
-migrate:
+	/* PC */
+	asm volatile(
+			"mflr 4;"
+			"bcl 20,31,$+4;"
+			"mflr 5;"
+			"addi 5,5,32;" /* Point to @migrated */
+			"std 5,%0;"
+			"mtlr 4;"
+		: "=m" (regs.nip)
+		:
+		: "r4", "r5"
+	);
+
+	/* MSR */
+	//asm volatile("mfmsr 4; std 4, %0" : "=m"(regs.msr) : : "r4");
+
+	/* CTR */
+	asm volatile("mfctr 4; std 4, %0" : "=m"(regs.ctr) : : "r4");
+
+	/* LR */
+	asm volatile("mflr 4; std 4, %0" : "=m"(regs.link) : : "r4");
+
+	/* XER */
+	//asm volatile("mfxer 4; std 4, %0" : "=m"(regs.xer) : : "r4");
+
+	/* Syscall */
+	asm volatile(
+			"mr 3, %0;"
+			"mr 4, %1;"
+			"li 0, %2;"
+			"sc;"
+		:
+		: "r"(nid), "r"(&regs), "i"(SYSCALL_SCHED_MIGRATE)
+		: "r0", "r3", "r4"
+	);
+
+//migrated:
 	asm volatile ("" ::: "memory");
 #ifdef WAIT_FOR_DEBUGGER
 	while (__wait_for_debugger);
 #endif
+
+	SET_FP_REGISTER(0);
+	SET_FP_REGISTER(1);
+	SET_FP_REGISTER(2);
+	SET_FP_REGISTER(3);
+	SET_FP_REGISTER(4);
+	SET_FP_REGISTER(5);
+	SET_FP_REGISTER(6);
+	SET_FP_REGISTER(7);
+	SET_FP_REGISTER(8);
+	SET_FP_REGISTER(9);
+	SET_FP_REGISTER(10);
+	SET_FP_REGISTER(11);
+	SET_FP_REGISTER(12);
+	SET_FP_REGISTER(13);
+	SET_FP_REGISTER(14);
+	SET_FP_REGISTER(15);
+	SET_FP_REGISTER(16);
+	SET_FP_REGISTER(17);
+	SET_FP_REGISTER(18);
+	SET_FP_REGISTER(19);
+	SET_FP_REGISTER(20);
+	SET_FP_REGISTER(21);
+	SET_FP_REGISTER(22);
+	SET_FP_REGISTER(23);
+	SET_FP_REGISTER(24);
+	SET_FP_REGISTER(25);
+	SET_FP_REGISTER(26);
+	SET_FP_REGISTER(27);
+	SET_FP_REGISTER(28);
+	SET_FP_REGISTER(29);
+	SET_FP_REGISTER(30);
+	SET_FP_REGISTER(31);
 
 	if (callback_fn) callback_fn(callback_args);
 	return;

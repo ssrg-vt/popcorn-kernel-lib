@@ -16,6 +16,9 @@ x86_64)
 aarch64)
 	ARCH="arm64"
 	;;
+ppc64le)
+	ARCH="powerpc"
+	;;
 esac
 
 while :
