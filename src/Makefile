@@ -1,11 +1,13 @@
-CC = gcc
-CFLAGS +=
+CC = $(CROSS_COMPILE)gcc
+OBJDUMP = $(CROSS_COMPILE)objdump
 
 LIBPOPCORN = libpopcorn.a
 POPCORN_LIB_PATH = ../lib
 POPCORN_INC_PATH = ../include
 
 # Features
+# Higher than O0 causes unexpected behavior
+CFLAGS += -O0
 CFLAGS += -DDEBUG -g -Wall -I$(POPCORN_INC_PATH)
 #CFLAGS += -DWAIT_FOR_DEBUGGER
 
@@ -24,7 +26,7 @@ basic : basic.o
 	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
 
 basic.asm: basic
-	objdump -d $< > $@
+	$(OBJDUMP) -d $< > $@
 
 pingpong: pingpong.o
 	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
@@ -39,7 +41,7 @@ stack: stack.o
 	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
 
 demo.asm: demo
-	objdump -d $< > $@
+	$(OBJDUMP) -d $< > $@
 
 clean:
 	rm -f $(TARGETS) $(OBJDUMPS) *.o

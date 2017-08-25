@@ -1,8 +1,10 @@
 LIBPOPCORN = libpopcorn.a
 
-CC = gcc
-# Higher -O may cause unexpected results
-CFLAGS += -O0
+CC = $(CROSS_COMPILE)gcc
+AR = $(CROSS_COMPILE)ar
+
+# Higher than -O1 causes unexpected results
+CFLAGS += -O1
 
 # Features
 CFLAGS += -DDEBUG -g -Wall
@@ -16,7 +18,7 @@ all: $(TARGETS)
 	$(CC) -c $(CFLAGS) $^ -o $@
 
 libpopcorn.a: popcorn.o
-	ar -cq $@ $^
+	$(AR) -cq $@ $^
 
 clean:
 	rm -f $(TARGETS) *.o
