@@ -29,7 +29,7 @@ struct thread {
 	int at;
 	int ret;
 	int finish;
-	int count;
+	unsigned long count;
 };
 struct thread **threads;
 struct thread stall_monitor;
@@ -43,7 +43,7 @@ int make_busy(int tid, struct thread *t)
 		xx *= 7;
 	}
 	*/
-	t[tid].count++;
+	t->count++;
 	global[tid]++;
 	return t->count;
 }
@@ -132,7 +132,7 @@ static void __print_heartbeats(void)
 {
 	int i;
 	for (i = 0; i < nthreads; i++) {
-		printf("%3ld ", (global[i] / 1000) % 1000);
+		printf("%3ld ", (threads[i]->count / 1000) % 1000);
 	}
 	printf("\n");
 }
@@ -163,18 +163,18 @@ static int __init_thread_params(void)
 
 static void *stall_monitor_thread(void *arg)
 {
-	unsigned long *last = 
+	unsigned long *last =
 		(unsigned long *)malloc(sizeof(unsigned long) * nthreads);
 
 	while (!stall_monitor.finish) {
 		int i;
 		sleep(2);
 		for (i = 0; i < nthreads; i++) {
-			if (last[i] == global[i]) {
+			if (last[i] == threads[i]->count) {
 				fprintf(stderr, "Thread %d might be stalled %d\n", i,
 						threads[i]->tid);
 			}
-			last[i] = global[i];
+			last[i] = threads[i]->count;
 		}
 	}
 	free(last);
