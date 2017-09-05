@@ -1,4 +1,6 @@
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE
+#endif
 #include <unistd.h>
 #include <sys/syscall.h>
 #include <fcntl.h>
@@ -436,7 +438,7 @@ void migrate(int nid, void (*callback_fn)(void *), void *callback_args)
 			"mflr 4;"
 			"bcl 20,31,$+4;"
 			"mflr 5;"
-			"addi 5,5,32;" /* Point to @migrated */
+			"addi 5,5,48;" /* Point to @migrated */
 			"std 5,%0;"
 			"mtlr 4;"
 		: "=m" (regs.nip)
