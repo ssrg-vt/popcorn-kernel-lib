@@ -24,4 +24,9 @@ int popcorn_migration_proposed(void);
  */
 int popcorn_propose_migration(int tid, int nid);
 
+
+/**
+ * Allocate memory aligned to the page boundary
+ */
+void *popcorn_malloc(int size);
 #endif

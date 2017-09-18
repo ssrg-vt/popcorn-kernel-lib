@@ -25,6 +25,13 @@
 #error Does not support this architecture
 #endif
 
+void *popcorn_malloc(int size)
+{
+	void *p = NULL;
+	posix_memalign(&p, 4096, size);
+	return p;
+}
+
 #ifdef __x86_64__
 struct regset_x86_64 {
 	/* Program counter/instruction pointer */
