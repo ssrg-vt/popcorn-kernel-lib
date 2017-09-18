@@ -109,9 +109,9 @@ int __wait_for_debugger = 1;
 #define GET_REGISTER(x) \
 		asm volatile ("mov %%"#x", %0" : "=m"(regs.x))
 #define GET_XMM_REGISTER(x) \
-		asm volatile ("vmovdqu %%xmm"#x", %0" : "=m"(regs.xmm[x]))
+		asm volatile ("movdqu %%xmm"#x", %0" : "=m"(regs.xmm[x]))
 #define SET_XMM_REGISTER(x) \
-		asm volatile ("vmovdqu %0, %%xmm"#x :: "m"(regs.xmm[x]))
+		asm volatile ("movdqu %0, %%xmm"#x :: "m"(regs.xmm[x]))
 
 void migrate(int nid, void (*callback_fn)(void *), void *callback_args)
 {
