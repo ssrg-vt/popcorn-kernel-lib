@@ -1,6 +1,11 @@
 #ifndef _POPCORN_H_
 #define _POPCORN_H_
 
+#include <stdlib.h>
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
 /**
  * Migrate this thread to the node nid. if nid == -1, use the proposed
  * migration location.
@@ -30,16 +35,18 @@ int popcorn_propose_migration(int tid, int nid);
  */
 void *popcorn_malloc(int size);
 
-
+#ifdef _OPENMP
 /**
  * Helper functions to transform omp "parallel for" to "parallel"
  * Example:
  *
  *   #ifndef _POPCORN
- *   #pragma omp parallel for
+ *   #pragma omp parallel for default(shared) private(i)
  *   for (i = 0; i <= 10; i++) {
  *   #else
+ *   #pragma omp prallel default(shared)
  *   {
+ *   int i;
  *   POPCORN_OMP_SPLIT_START(i, 0, 10, THREADS_PER_CORE);
  *   #endif
  *         ...
@@ -57,10 +64,12 @@ int popcorn_omp_split(int tid, int threads,
 	const int _tid = omp_get_thread_num(); \
 	const int _cores = N; \
 	popcorn_omp_split(_tid, omp_get_max_threads(), (start), (end), &_s, &_e); \
+	/* printf("%d : %d-%d : %d-%d\n", _tid, start, end, _s, _e); */ \
 	if (_tid / _cores) migrate(_tid / _cores, NULL, NULL); \
 	for ((k) = _s; (k) <= _e; (k)++) {
 
 #define POPCORN_OMP_SPLIT_END() \
 	if (_tid / _cores) migrate(0, NULL, NULL); \
 }
+#endif
 #endif

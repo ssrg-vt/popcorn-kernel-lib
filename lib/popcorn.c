@@ -38,7 +38,7 @@ int popcorn_omp_split(int tid, int threads, int start, int end, int *s, int *e)
 	int step = N / threads;
 	*s = start + tid * step;
 	if (tid != threads - 1) {
-		*e = (tid + 1) * step;
+		*e = start + (tid + 1) * step - 1;
 	} else {
 		*e = end;
 	}
