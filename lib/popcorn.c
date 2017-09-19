@@ -32,6 +32,19 @@ void *popcorn_malloc(int size)
 	return p;
 }
 
+int popcorn_omp_split(int tid, int threads, int start, int end, int *s, int *e)
+{
+	int N = end - start + 1;
+	int step = N / threads;
+	*s = start + tid * step;
+	if (tid != threads - 1) {
+		*e = (tid + 1) * step;
+	} else {
+		*e = end;
+	}
+	return 0;
+}
+
 #ifdef __x86_64__
 struct regset_x86_64 {
 	/* Program counter/instruction pointer */
