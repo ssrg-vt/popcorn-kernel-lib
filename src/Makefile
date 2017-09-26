@@ -14,8 +14,8 @@ CFLAGS += -DDEBUG -g -Wall -I$(POPCORN_INC_PATH)
 LDFLAGS += -static -pthread -L$(POPCORN_LIB_PATH)
 LIBS += -l:$(LIBPOPCORN)
 
-TARGETS = basic pingpong demo mt stack
-OBJDUMPS = basic.asm demo.asm
+TARGETS = basic pingpong demo mt stack rw
+OBJDUMPS = 
 
 all: $(TARGETS) $(OBJDUMPS)
 
@@ -39,6 +39,9 @@ mt: mt.o
 
 stack: stack.o
 	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
+
+rw: rw.o
+	$(CC) $(LDFLAGS) $^ $(LIBS) -o $@
 
 demo.asm: demo
 	$(OBJDUMP) -d $< > $@
