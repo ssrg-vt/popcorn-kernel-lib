@@ -32,6 +32,7 @@ void *popcorn_malloc(int size)
 	return p;
 }
 
+#ifdef _OPENMP
 int popcorn_omp_split(int tid, int threads, int start, int end, int *s, int *e)
 {
 	int N = end - start + 1;
@@ -44,6 +45,7 @@ int popcorn_omp_split(int tid, int threads, int start, int end, int *s, int *e)
 	}
 	return 0;
 }
+#endif
 
 #ifdef __x86_64__
 struct regset_x86_64 {

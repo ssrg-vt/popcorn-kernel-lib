@@ -66,7 +66,7 @@ int popcorn_omp_split(int tid, int threads,
 	popcorn_omp_split(_tid, omp_get_max_threads(), (start), (end), &_s, &_e); \
 	/* printf("%d : %d-%d : %d-%d\n", _tid, start, end, _s, _e); */ \
 	if (_tid / _cores) migrate(_tid / _cores, NULL, NULL); \
-	for ((k) = _s; (k) <= _e; (k)++) {
+	for ((k) = _s; (k) <= _e; (k)++)
 
 #define POPCORN_OMP_SPLIT_END() \
 	if (_tid / _cores) migrate(0, NULL, NULL); \

@@ -43,7 +43,7 @@ int loop_w(void)
 }
 void loop_rw(void)
 {
-	const int pages = BUFFER * 1024 / 4;
+	//const int pages = BUFFER * 1024 / 4;
 	int i;
 	for (i = 0; i < 1000; i++) {
 	}
