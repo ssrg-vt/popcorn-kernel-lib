@@ -6,8 +6,6 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <unistd.h>
-#include <sys/syscall.h>
-#include <sys/types.h>
 #include <sys/stat.h>
 #include <string.h>
 #include <fcntl.h>
@@ -15,7 +13,7 @@
 
 #include "popcorn.h"
 
-int nthreads = 16;
+int nthreads = 1;
 int nodes = 3;
 int here = 0;
 int check_stall = 1;
@@ -58,7 +56,7 @@ static void *child_thread(void *_thread)
 	struct thread *thread = _thread;
 	int tid = thread->id;
 	int prev_nid = __get_location(thread->id);
-	thread->tid = syscall(SYS_gettid);
+	thread->tid = popcorn_gettid();
 
 	pthread_barrier_wait(&barrier_start);
 

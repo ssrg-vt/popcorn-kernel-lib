@@ -2,8 +2,6 @@
 #include <unistd.h>
 #include <string.h>
 #include <pthread.h>
-#include <sys/syscall.h>
-#include <sys/types.h>
 #include <fcntl.h>
 
 #include "popcorn.h"
@@ -31,7 +29,7 @@ int loop()
 void *child(void *arg)
 {
 	struct child_param *param = (struct child_param *)arg;
-	int tid = syscall(SYS_gettid);
+	int tid = popcorn_gettid();
 	int i;
 
 	for (i = 0; i < LOOPS; i++) {

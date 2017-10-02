@@ -35,6 +35,14 @@ int popcorn_propose_migration(int tid, int nid);
  */
 void *popcorn_malloc(int size);
 
+
+/**
+ * Return the tid of the current context. This is a wrapper for
+ * syscall(SYS_gettid)
+ */
+int popcorn_gettid();
+
+
 #ifdef _OPENMP
 /**
  * Helper functions to transform omp "parallel for" to "parallel"
