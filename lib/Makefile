@@ -4,7 +4,7 @@ CC = $(CROSS_COMPILE)gcc
 AR = $(CROSS_COMPILE)ar
 
 # Higher than -O1 causes unexpected results
-CFLAGS += -O1
+CFLAGS += -O0
 
 # Features
 CFLAGS += -DDEBUG -g -Wall

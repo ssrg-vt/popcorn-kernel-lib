@@ -466,19 +466,6 @@ void migrate(int nid, void (*callback_fn)(void *), void *callback_args)
 	GET_FP_REGISTER(30);
 	GET_FP_REGISTER(31);
 
-	/* PC */
-	asm volatile(
-			"mflr 4;"
-			"bcl 20,31,$+4;"
-			"mflr 5;"
-			"addi 5,5,48;" /* Point to @migrated */
-			"std 5,%0;"
-			"mtlr 4;"
-		: "=m" (regs.nip)
-		:
-		: "r4", "r5"
-	);
-
 	/* MSR */
 	//asm volatile("mfmsr 4; std 4, %0" : "=m"(regs.msr) : : "r4");
 
@@ -490,6 +477,22 @@ void migrate(int nid, void (*callback_fn)(void *), void *callback_args)
 
 	/* XER */
 	//asm volatile("mfxer 4; std 4, %0" : "=m"(regs.xer) : : "r4");
+
+	/* CCR */
+	asm volatile("mfcr 4; std 4, %0" : "=m"(regs.ccr) : : "r4");
+
+	/* PC */
+	asm volatile(
+			"mflr 4;"
+			"bcl 20,31,$+4;"
+			"mflr 5;"
+			"addi 5,5,40;" /* Point to @migrated */
+			"std 5,%0;"
+			"mtlr 4;"
+		: "=m" (regs.nip)
+		:
+		: "r4", "r5"
+	);
 
 	/* Syscall */
 	asm volatile(
