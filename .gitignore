@@ -31,9 +31,3 @@
 # Debug files
 *.dSYM/
 *.su
-
-basic
-mt
-pingpong
-demo
-*.asm

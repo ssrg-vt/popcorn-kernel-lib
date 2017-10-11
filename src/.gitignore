@@ -1,0 +1,10 @@
+# binaries
+basic
+mt
+pingpong
+demo
+rw
+stack
+
+# ASM dumps
+*.asm
