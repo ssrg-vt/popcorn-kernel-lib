@@ -3,11 +3,17 @@ LIBPOPCORN = libpopcorn.a
 CC = $(CROSS_COMPILE)gcc
 AR = $(CROSS_COMPILE)ar
 
-# Higher than -O1 causes unexpected results
-CFLAGS += -O0
+# Higher -O causes unexpected results
+ifeq ($(ARCH),arm64)
+OFLAG = -O0
+else ifeq ($(ARCH),powerpc)
+OFLAG = -O0
+else
+OFLAG = -O1
+endif
 
 # Features
-CFLAGS += -DDEBUG -g -Wall
+CFLAGS += $(OFLAG) -DDEBUG -g -Wall
 #CFLAGS += -DWAIT_FOR_DEBUGGER
 
 TARGETS = $(LIBPOPCORN)
