@@ -42,6 +42,12 @@ void *popcorn_malloc(int size);
  */
 int popcorn_gettid();
 
+
+enum popcorn_node_status {
+	POPCORN_NODE_OFFLINE = 0x00,
+	POPCORN_NODE_ONLINE = 0x01,
+};
+
 enum popcorn_arch_types {
 	POPCORN_NODE_AARCH64 = 0,
 	POPCORN_NODE_PPC64 = 1,
@@ -54,6 +60,11 @@ struct popcorn_node_info {
 	int arch;
 	int distance;
 };
+
+/**
+ * Get the popcorn node information
+ */
+int popcorn_get_node_info(int nid, struct popcorn_node_info *info);
 
 
 #ifdef _OPENMP

@@ -127,6 +127,12 @@ int popcorn_propose_migration(pid_t tid, int nid)
 	return syscall(SYSCALL_SCHED_PROPOSE_MIGRATION, tid, nid);
 }
 
+struct popcorn_node_info;
+int popcorn_get_node_info(int nid, struct popcorn_node_info *info)
+{
+	return syscall(SYSCALL_SCHED_GET_NODE_INFO, nid, info);
+}
+
 #ifdef WAIT_FOR_DEBUGGER
 int __wait_for_debugger = 1;
 #endif
