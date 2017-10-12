@@ -466,17 +466,15 @@ void migrate(int nid, void (*callback_fn)(void *), void *callback_args)
 	GET_FP_REGISTER(30);
 	GET_FP_REGISTER(31);
 
-	/* MSR */
+	/* MSR and XER requires the kernel priviledge */
 	//asm volatile("mfmsr 4; std 4, %0" : "=m"(regs.msr) : : "r4");
-
-	/* CTR */
-	asm volatile("mfctr 4; std 4, %0" : "=m"(regs.ctr) : : "r4");
+	//asm volatile("mfxer 4; std 4, %0" : "=m"(regs.xer) : : "r4");
 
 	/* LR */
 	asm volatile("mflr 4; std 4, %0" : "=m"(regs.link) : : "r4");
 
-	/* XER */
-	//asm volatile("mfxer 4; std 4, %0" : "=m"(regs.xer) : : "r4");
+	/* CTR */
+	asm volatile("mfctr 4; std 4, %0" : "=m"(regs.ctr) : : "r4");
 
 	/* CCR */
 	asm volatile("mfcr 4; std 4, %0" : "=m"(regs.ccr) : : "r4");
@@ -489,10 +487,11 @@ void migrate(int nid, void (*callback_fn)(void *), void *callback_args)
 			"addi 5,5,40;" /* Point to @migrated */
 			"std 5,%0;"
 			"mtlr 4;"
-		: "=m" (regs.nip)
+		: "=m"(regs.nip)
 		:
 		: "r4", "r5"
 	);
+	asm volatile ("" ::: "memory");
 
 	/* Syscall */
 	asm volatile(
@@ -505,7 +504,7 @@ void migrate(int nid, void (*callback_fn)(void *), void *callback_args)
 		: "r0", "r3", "r4"
 	);
 
-//migrated:
+//migrated: <-- Resume from here at remote
 	asm volatile ("" ::: "memory");
 #ifdef WAIT_FOR_DEBUGGER
 	while (__wait_for_debugger);

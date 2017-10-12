@@ -1,5 +1,5 @@
 CC = $(CROSS_COMPILE)gcc
-OBJDUMP = $(CROSS_COMPILE)objdump
+OBJDUMP = $(CROSS_COMPILE)objdump -d -S
 
 LIBPOPCORN = libpopcorn.a
 POPCORN_LIB_PATH = ../lib
@@ -15,7 +15,7 @@ LDFLAGS += -static -pthread -L$(POPCORN_LIB_PATH)
 LIBS += -l:$(LIBPOPCORN)
 
 TARGETS = basic pingpong demo mt stack rw
-OBJDUMPS = 
+OBJDUMPS =
 
 all: $(TARGETS) $(OBJDUMPS)
 
@@ -26,7 +26,7 @@ basic : basic.o
 	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
 
 basic.asm: basic
-	$(OBJDUMP) -d $< > $@
+	$(OBJDUMP) $< > $@
 
 pingpong: pingpong.o
 	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
@@ -44,7 +44,7 @@ rw: rw.o
 	$(CC) $(LDFLAGS) $^ $(LIBS) -o $@
 
 demo.asm: demo
-	$(OBJDUMP) -d $< > $@
+	$(OBJDUMP) $< > $@
 
 clean:
 	rm -f $(TARGETS) $(OBJDUMPS) *.o

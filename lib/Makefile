@@ -13,7 +13,7 @@ OFLAG = -O1
 endif
 
 # Features
-CFLAGS += $(OFLAG) -DDEBUG -g -Wall
+CFLAGS += $(OFLAG) -DDEBUG -g -Wall -fPIC
 #CFLAGS += -DWAIT_FOR_DEBUGGER
 
 TARGETS = $(LIBPOPCORN)
