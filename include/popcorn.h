@@ -2,30 +2,47 @@
 #define _POPCORN_H_
 
 #include <stdlib.h>
-#ifdef _OPENMP
-#include <omp.h>
-#endif
+
+#define MAX_POPCORN_NODES	32
+
 
 /**
  * Migrate this thread to the node nid. if nid == -1, use the proposed
  * migration location.
+ *
+ * return 0 on success, return non-zero otherwise
+ *  EINVAL: invalid migration destination @nid
+ *  EAGAIN: @nid is offline now
+ *  EBUSY:  already running at @nid
  */
 void migrate(int nid, void (*callback)(void *), void *callback_param);
 
 
 /*
- * Check wheter the migration is proposed by others such as a scheduler
+ * Get the current status of the current thread regarding migration
  *
- * return >0 if the migration is proposed.
- * return 0 otherwise.
+ * return 0 on fetching the status successfully.
+ * return non-zero otherwise.
+ *  EINVAL: invalid @status
  */
-int popcorn_migration_proposed(void);
+struct popcorn_thread_status {
+	int current_nid;
+	int proposed_nid;
+	int peer_nid;
+	int peer_pid;
+};
+
+int popcorn_get_status(struct popcorn_thread_status *status);
 
 
 /**
- * Propose to migrate pid to nid
+ * Propose to migrate @tid to @nid
  *
- * return 0 success, return non-zero otherwise.
+ * If @tid 0 means to propose the migration for the current one.
+ *
+ * return 0 on success, return non-zero otherwise.
+ *  ENOENT: no thread corresponding to @tid
+ *  EINVAL: invalid @nid
  */
 int popcorn_propose_migration(int tid, int nid);
 
@@ -50,8 +67,8 @@ enum popcorn_node_status {
 
 enum popcorn_arch_types {
 	POPCORN_NODE_AARCH64 = 0,
-	POPCORN_NODE_PPC64 = 1,
-	POPCORN_NODE_X86 = 2,
+	POPCORN_NODE_X86 = 1,
+	POPCORN_NODE_PPC64 = 2,
 	POPCORN_NODE_UNKNOWN,
 };
 
@@ -64,10 +81,12 @@ struct popcorn_node_info {
 /**
  * Get the popcorn node information
  */
-int popcorn_get_node_info(int nid, struct popcorn_node_info *info);
+int popcorn_get_node_info(struct popcorn_node_info *info);
 
 
 #ifdef _OPENMP
+#include <omp.h>
+
 /**
  * Helper functions to transform omp "parallel for" to "parallel"
  * Example:
@@ -103,5 +122,6 @@ int popcorn_omp_split(int tid, int threads,
 #define POPCORN_OMP_SPLIT_END() \
 	if (_tid / _cores) migrate(0, NULL, NULL); \
 }
-#endif
+#endif /* _OPENMP */
+
 #endif

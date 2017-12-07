@@ -7,7 +7,7 @@ POPCORN_INC_PATH = ../include
 
 # Features
 # Higher than O0 causes unexpected behavior
-CFLAGS += -O0
+CFLAGS += -O2
 CFLAGS += -DDEBUG -g -Wall -I$(POPCORN_INC_PATH)
 #CFLAGS += -DWAIT_FOR_DEBUGGER
 

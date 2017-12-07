@@ -10,22 +10,22 @@
 #include <string.h>
 
 #ifdef __x86_64__
-#define SYSCALL_SCHED_MIGRATE	330
-#define SYSCALL_SCHED_PROPOSE_MIGRATION		331
-#define SYSCALL_SCHED_MIGRATION_PROPOSED	332
-#define SYSCALL_SCHED_GET_NODE_INFO	333
+#define SYSCALL_POPCORN_MIGRATE	330
+#define SYSCALL_POPCORN_PROPOSE_MIGRATION	331
+#define SYSCALL_POPCORN_GET_THREAD_STATUS	332
+#define SYSCALL_POPCORN_GET_NODE_INFO	333
 #define SYSCALL_GETTID 186
 #elif __aarch64__
-#define SYSCALL_SCHED_MIGRATE	285
-#define SYSCALL_SCHED_PROPOSE_MIGRATION		286
-#define SYSCALL_SCHED_MIGRATION_PROPOSED	287
-#define SYSCALL_SCHED_GET_NODE_INFO	288
+#define SYSCALL_POPCORN_MIGRATE	285
+#define SYSCALL_POPCORN_PROPOSE_MIGRATION	286
+#define SYSCALL_POPCORN_GET_THREAD_STATUS	287
+#define SYSCALL_POPCORN_GET_NODE_INFO	288
 #define SYSCALL_GETTID 178
 #elif __powerpc64__
-#define SYSCALL_SCHED_MIGRATE	379
-#define SYSCALL_SCHED_PROPOSE_MIGRATION		380
-#define SYSCALL_SCHED_MIGRATION_PROPOSED	381
-#define SYSCALL_SCHED_GET_NODE_INFO	382
+#define SYSCALL_POPCORN_MIGRATE	379
+#define SYSCALL_POPCORN_PROPOSE_MIGRATION	380
+#define SYSCALL_POPCORN_GET_THREAD_STATUS	381
+#define SYSCALL_POPCORN_GET_NODE_INFO	382
 #define SYSCALL_GETTID 207
 #else
 #error Does not support this architecture
@@ -43,7 +43,6 @@ int popcorn_gettid(void)
 	return syscall(SYSCALL_GETTID);
 }
 
-#ifdef _OPENMP
 int popcorn_omp_split(int tid, int threads, int start, int end, int *s, int *e)
 {
 	int N = end - start + 1;
@@ -56,7 +55,6 @@ int popcorn_omp_split(int tid, int threads, int start, int end, int *s, int *e)
 	}
 	return 0;
 }
-#endif
 
 #ifdef __x86_64__
 struct regset_x86_64 {
@@ -117,20 +115,21 @@ struct regset_ppc {
 #error No architecture is specified. Check the Makefile
 #endif
 
-int popcorn_migration_proposed(void)
+struct popcorn_thread_status;
+int popcorn_get_status(struct popcorn_thread_status *status)
 {
-	return syscall(SYSCALL_SCHED_MIGRATION_PROPOSED);
+	return syscall(SYSCALL_POPCORN_GET_THREAD_STATUS, status);
 }
 
 int popcorn_propose_migration(pid_t tid, int nid)
 {
-	return syscall(SYSCALL_SCHED_PROPOSE_MIGRATION, tid, nid);
+	return syscall(SYSCALL_POPCORN_PROPOSE_MIGRATION, tid, nid);
 }
 
 struct popcorn_node_info;
-int popcorn_get_node_info(int nid, struct popcorn_node_info *info)
+int popcorn_get_node_info(struct popcorn_node_info *info)
 {
-	return syscall(SYSCALL_SCHED_GET_NODE_INFO, nid, info);
+	return syscall(SYSCALL_POPCORN_GET_NODE_INFO, info);
 }
 
 #ifdef WAIT_FOR_DEBUGGER
@@ -208,7 +207,7 @@ void migrate(int nid, void (*callback_fn)(void *), void *callback_args)
 			"mov %2, %%eax;"
 			"syscall;"
 		:
-		: "g"(nid), "g"(&regs), "i"(SYSCALL_SCHED_MIGRATE)
+		: "g"(nid), "g"(&regs), "i"(SYSCALL_POPCORN_MIGRATE)
 		: "edi", "rsi", "eax"
 	);
 
@@ -336,6 +335,7 @@ void migrate(int nid, void (*callback_fn)(void *), void *callback_args)
 		: "r"(&&migrated)
 		: "x15"
 	);
+	asm volatile ("" ::: "memory");
 
 	/* SYSCALL */
 	asm volatile (
@@ -344,7 +344,7 @@ void migrate(int nid, void (*callback_fn)(void *), void *callback_args)
 			"mov x8, %2;"
 			"svc 0;"
 		:
-		: "r"(nid), "r"(&regs), "i"(SYSCALL_SCHED_MIGRATE)
+		: "r"(nid), "r"(&regs), "i"(SYSCALL_POPCORN_MIGRATE)
 		: "w0", "x1", "x8"
 	);
 
@@ -506,7 +506,7 @@ void migrate(int nid, void (*callback_fn)(void *), void *callback_args)
 			"li 0, %2;"
 			"sc;"
 		:
-		: "r"(nid), "r"(&regs), "i"(SYSCALL_SCHED_MIGRATE)
+		: "r"(nid), "r"(&regs), "i"(SYSCALL_POPCORN_MIGRATE)
 		: "r0", "r3", "r4"
 	);
 

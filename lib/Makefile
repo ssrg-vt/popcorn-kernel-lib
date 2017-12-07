@@ -9,11 +9,12 @@ OFLAG = -O0
 else ifeq ($(ARCH),powerpc)
 OFLAG = -O0
 else
-OFLAG = -O1
+OFLAG = -O2 -fno-schedule-insns -fno-schedule-insns2
 endif
 
 # Features
 CFLAGS += $(OFLAG) -DDEBUG -g -Wall -fPIC
+CFLAGS += -D_OPENMP
 #CFLAGS += -DWAIT_FOR_DEBUGGER
 
 TARGETS = $(LIBPOPCORN)
