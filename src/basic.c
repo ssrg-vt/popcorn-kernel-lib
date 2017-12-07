@@ -16,8 +16,7 @@ void migrated_callback(void *params)
 {
 	char *buffer = params;
 	int fd;
-	fd = open("/home/beowulf/basic-output",
-			O_CREAT | O_WRONLY | O_APPEND, 0666);
+	fd = open("/tmp/basic-output", O_CREAT | O_WRONLY | O_APPEND, 0666);
 	write(fd, buffer, strlen(buffer));
 	close(fd);
 
@@ -42,5 +41,5 @@ int main(int argc, char *argv[])
 
 	printf("I am back!\n");
 
-	return 0xdeadbeaf;
+	return 0xdead;
 }

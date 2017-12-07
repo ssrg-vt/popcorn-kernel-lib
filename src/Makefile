@@ -6,7 +6,6 @@ POPCORN_LIB_PATH = ../lib
 POPCORN_INC_PATH = ../include
 
 # Features
-# Higher than O0 causes unexpected behavior
 CFLAGS += -O2
 CFLAGS += -DDEBUG -g -Wall -I$(POPCORN_INC_PATH)
 #CFLAGS += -DWAIT_FOR_DEBUGGER
@@ -14,7 +13,7 @@ CFLAGS += -DDEBUG -g -Wall -I$(POPCORN_INC_PATH)
 LDFLAGS += -static -pthread -L$(POPCORN_LIB_PATH)
 LIBS += -l:$(LIBPOPCORN)
 
-TARGETS = basic pingpong demo mt stack rw
+TARGETS = basic pingpong demo mt stack rw status
 OBJDUMPS =
 
 all: $(TARGETS) $(OBJDUMPS)
@@ -41,6 +40,9 @@ stack: stack.o
 	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
 
 rw: rw.o
+	$(CC) $(LDFLAGS) $^ $(LIBS) -o $@
+
+status: status.o
 	$(CC) $(LDFLAGS) $^ $(LIBS) -o $@
 
 demo.asm: demo

@@ -5,6 +5,7 @@ pingpong
 demo
 rw
 stack
+status
 
 # ASM dumps
 *.asm
