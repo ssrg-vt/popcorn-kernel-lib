@@ -31,29 +31,10 @@
 #error Does not support this architecture
 #endif
 
-void *popcorn_malloc(int size)
-{
-	void *p = NULL;
-	posix_memalign(&p, 4096, size);
-	return p;
-}
 
 int popcorn_gettid(void)
 {
 	return syscall(SYSCALL_GETTID);
-}
-
-int popcorn_omp_split(int tid, int threads, int start, int end, int *s, int *e)
-{
-	int N = end - start + 1;
-	int step = N / threads;
-	*s = start + tid * step;
-	if (tid != threads - 1) {
-		*e = start + (tid + 1) * step - 1;
-	} else {
-		*e = end;
-	}
-	return 0;
 }
 
 #ifdef __x86_64__
@@ -114,6 +95,7 @@ struct regset_ppc {
 #else
 #error No architecture is specified. Check the Makefile
 #endif
+
 
 struct popcorn_thread_status;
 int popcorn_get_status(struct popcorn_thread_status *status)
@@ -212,7 +194,7 @@ void migrate(int nid, void (*callback_fn)(void *), void *callback_args)
 	);
 
 migrated:
-	asm volatile ("mfence" ::: "memory");
+	// asm volatile ("mfence" ::: "memory");
 #ifdef WAIT_FOR_DEBUGGER
 	while (__wait_for_debugger);
 #endif

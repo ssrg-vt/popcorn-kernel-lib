@@ -18,6 +18,11 @@
 void migrate(int nid, void (*callback)(void *), void *callback_param);
 
 
+void migrate_schedule(size_t region,
+                      int popcorn_tid,
+                      void (*callback)(void *),
+                      void *callback_data);
+
 /*
  * Get the current status of the current thread regarding migration
  *
@@ -35,6 +40,14 @@ struct popcorn_thread_status {
 int popcorn_get_status(struct popcorn_thread_status *status);
 
 
+static inline int popcorn_current_nid(void)
+{
+	struct popcorn_thread_status status;
+	if (popcorn_get_status(&status)) return -1;
+
+	return status.current_nid;
+}
+
 /**
  * Propose to migrate @tid to @nid
  *
@@ -50,7 +63,13 @@ int popcorn_propose_migration(int tid, int nid);
 /**
  * Allocate memory aligned to the page boundary
  */
-void *popcorn_malloc(int size);
+#include <malloc.h>
+static inline void *popcorn_malloc(size_t size)
+{
+	void *p = NULL;
+	posix_memalign(&p, 4096, size);
+	return p;
+}
 
 
 /**
@@ -106,22 +125,54 @@ int popcorn_get_node_info(struct popcorn_node_info *info);
  *   }
  *   #endif
  */
-int popcorn_omp_split(int tid, int threads,
-		int start, int end, int *range_start, int *range_end);
+static inline int popcorn_omp_split(int tid, int threads,
+		int start, int end, int *range_start, int *range_end)
+{
+	int N = end - start + 1;
+	int step = N / threads;
+	*range_start = start + tid * step;
+	if (tid != threads - 1) {
+		*range_end = start + (tid + 1) * step - 1;
+	} else {
+		*range_end = end;
+	}
+	/* printf("%d : %d-%d : %d-%d\n", _tid, start, end, _s, _e); */
+	return 0;
+}
 
+
+#if 0
+#define POPCORN_OMP_SPLIT_START(k, start, end, N) \
+{	\
+	int _s, _e; \
+	const int _tid = omp_get_popcorn_tid(); \
+	popcorn_omp_split(_tid, omp_get_max_threads(), (start), (end), &_s, &_e); \
+	migrate_schedule(0, _tid, NULL, NULL); \
+	popcorn_omp_id(R); \
+	for ((k) = _s; (k) <= _e; (k)++)
+
+
+#define POPCORN_OMP_SPLIT_END() \
+	popcorn_omp_id(0);
+	migrate(0, NULL, NULL); \
+}
+
+#else
 #define POPCORN_OMP_SPLIT_START(k, start, end, N) \
 {	\
 	int _s, _e; \
 	const int _tid = omp_get_thread_num(); \
 	const int _cores = N; \
 	popcorn_omp_split(_tid, omp_get_max_threads(), (start), (end), &_s, &_e); \
-	/* printf("%d : %d-%d : %d-%d\n", _tid, start, end, _s, _e); */ \
 	if (_tid / _cores) migrate(_tid / _cores, NULL, NULL); \
 	for ((k) = _s; (k) <= _e; (k)++)
+
 
 #define POPCORN_OMP_SPLIT_END() \
 	if (_tid / _cores) migrate(0, NULL, NULL); \
 }
+#endif
+
 #endif /* _OPENMP */
 
 #endif

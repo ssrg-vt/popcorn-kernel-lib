@@ -1,19 +1,25 @@
 LIBPOPCORN = libpopcorn.a
 
+#POPCORN=/usr/local/popcorn/x86_64
+#CC = $(POPCORN)/bin/musl-gcc
 CC = $(CROSS_COMPILE)gcc
+
 AR = $(CROSS_COMPILE)ar
+RANLIB = $(CROSS_COMPILE)ranlib
 
 # Higher -O causes unexpected results
 ifeq ($(ARCH),arm64)
-OFLAG = -O0
+OFLAGS = -O0
 else ifeq ($(ARCH),powerpc)
-OFLAG = -O0
+OFLAGS = -O0
 else
-OFLAG = -O2 -fno-schedule-insns -fno-schedule-insns2
+OFLAGS = -O2 -fno-schedule-insns -fno-schedule-insns2
 endif
 
 # Features
-CFLAGS += $(OFLAG) -DDEBUG -g -Wall -fPIC
+CFLAGS += $(OFLAGS)
+CFLAGS += -I../include
+CFLAGS += -DDEBUG -g -Wall -fPIC
 CFLAGS += -D_OPENMP
 #CFLAGS += -DWAIT_FOR_DEBUGGER
 
@@ -24,8 +30,9 @@ all: $(TARGETS)
 %.o: %.c
 	$(CC) -c $(CFLAGS) $^ -o $@
 
-libpopcorn.a: popcorn.o
-	$(AR) -cq $@ $^
+libpopcorn.a: mapping.o migrate.o
+	$(AR) -cr $@ $^
+	$(RANLIB) $@
 
 clean:
 	rm -f $(TARGETS) *.o
