@@ -125,19 +125,30 @@ int popcorn_get_node_info(struct popcorn_node_info *info);
  *   }
  *   #endif
  */
-static inline int popcorn_omp_split(int tid, int threads,
+static inline void popcorn_omp_split(int tid, int threads,
 		int start, int end, int *range_start, int *range_end)
 {
 	int N = end - start + 1;
-	int step = N / threads;
+	float step;
+	if (N < threads) {
+		threads = N;
+		if (tid >= N) {
+			*range_start = 0;
+			*range_end = -1;
+			return;
+		}
+	}
+	step = (float)N / threads;
 	*range_start = start + tid * step;
 	if (tid != threads - 1) {
 		*range_end = start + (tid + 1) * step - 1;
 	} else {
 		*range_end = end;
 	}
-	/* printf("%d : %d-%d : %d-%d\n", _tid, start, end, _s, _e); */
-	return 0;
+	/*
+	printf("%d : %d - %d, %d\n", tid, *range_start, *range_end,
+			*range_end - *range_start + 1);
+	*/
 }
 
 
