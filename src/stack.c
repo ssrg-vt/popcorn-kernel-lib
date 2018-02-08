@@ -10,7 +10,7 @@
 #include <fcntl.h>
 #include <string.h>
 
-#include "popcorn.h"
+#include "migrate.h"
 
 #ifdef __x86_64__
 #define GET_RBP(rbp) asm volatile ("mov %%rbp, %0" : "=g"(rbp))
@@ -26,7 +26,7 @@ void migrated_callback(void *params)
 {
 	char *buffer = params;
 	int fd;
-	fd = open("/home/beowulf/basic-output",
+	fd = open("/tmp/migrate-test",
 			O_CREAT | O_WRONLY | O_APPEND, 0666);
 	write(fd, buffer, strlen(buffer));
 	close(fd);

@@ -9,7 +9,7 @@
 #include <string.h>
 #include <fcntl.h>
 
-#include "popcorn.h"
+#include "migrate.h"
 
 void make_busy(void)
 {
@@ -30,7 +30,7 @@ void pingpong(void)
 		
 		make_busy();
 
-		fd = open("/home/beowulf/share/ping", O_RDONLY);
+		fd = open("/tmp/ping", O_RDONLY);
 		if (fd < 0) {
 			printf("waiting for the control file\n");
 			continue;

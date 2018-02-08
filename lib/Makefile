@@ -1,4 +1,4 @@
-LIBPOPCORN = libpopcorn.a
+LIBMIGRATE = libmigrate.a
 
 #POPCORN=/usr/local/popcorn/x86_64
 #CC = $(POPCORN)/bin/musl-gcc
@@ -23,14 +23,14 @@ CFLAGS += -DDEBUG -g -Wall -fPIC
 CFLAGS += -D_OPENMP
 #CFLAGS += -DWAIT_FOR_DEBUGGER
 
-TARGETS = $(LIBPOPCORN)
+TARGETS = $(LIBMIGRATE)
 
 all: $(TARGETS)
 
 %.o: %.c
 	$(CC) -c $(CFLAGS) $^ -o $@
 
-libpopcorn.a: mapping.o migrate.o
+libmigrate.a: mapping.o migrate.o
 	$(AR) -cr $@ $^
 	$(RANLIB) $@
 

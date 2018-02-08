@@ -12,6 +12,7 @@
 #define _POPCORN_ALIGN_HEAP
 #undef _POPCORN_PROFILE_REGION
 #undef _POPCORN_RELEASE_OWNERSHIP
+#undef _POPCORN_MIGRATE_SCHEDULE
 #ifndef PAGE_SHIFT
 #define PAGE_SHIFT	12
 #endif
@@ -194,7 +195,7 @@ static inline int popcorn_release_ownership(void *start, size_t len) {
 	return madvise(start, len, MADVISE_RELEASE);
 }
 #else
-static inline int popcorn_release_ownership(void *start, size_t len) { return -EINVAL };
+static inline int popcorn_release_ownership(void *start, size_t len) { return -22; /* EINVAL */ }
 #endif /* _POPCORN_RELEASE_OWNERSHIP */
 
 
@@ -210,7 +211,7 @@ static inline int popcorn_release_ownership(void *start, size_t len) { return -E
 #ifdef _OPENMP
 #include <omp.h>
 
-#ifdef SCHEDULE_THREADS
+#ifdef _POPCORN_MIGRATE_SCHEDULE
 #define POPCORN_OMP_MIGRATE_START(R) \
 {	\
 	popcorn_migrate_schedule(R, omp_get_popdorn_tid()); \

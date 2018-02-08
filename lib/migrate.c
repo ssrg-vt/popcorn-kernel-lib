@@ -115,7 +115,7 @@ int popcorn_get_node_info(struct popcorn_node_info *info)
 }
 
 #ifdef WAIT_FOR_DEBUGGER
-int __wait_for_debugger = 1;
+static int __wait_for_debugger = 1;
 #endif
 
 #ifdef __x86_64__
@@ -194,7 +194,7 @@ void migrate(int nid, void (*callback_fn)(void *), void *callback_args)
 	);
 
 migrated:
-	// asm volatile ("mfence" ::: "memory");
+	asm volatile ("mfence" ::: "memory");
 #ifdef WAIT_FOR_DEBUGGER
 	while (__wait_for_debugger);
 #endif

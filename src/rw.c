@@ -7,7 +7,7 @@
 #include <sys/types.h>
 #include <fcntl.h>
 
-#include "popcorn.h"
+#include "migrate.h"
 
 static int THREADS = 2;
 static int BUFFER = 1; /* in MB */

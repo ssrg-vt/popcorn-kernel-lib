@@ -1,7 +1,7 @@
 CC = $(CROSS_COMPILE)gcc
 OBJDUMP = $(CROSS_COMPILE)objdump -d -S
 
-LIBPOPCORN = libpopcorn.a
+LIBMIGRATE = libmigrate.a
 POPCORN_LIB_PATH = ../lib
 POPCORN_INC_PATH = ../include
 
@@ -11,7 +11,7 @@ CFLAGS += -DDEBUG -g -Wall -I$(POPCORN_INC_PATH)
 #CFLAGS += -DWAIT_FOR_DEBUGGER
 
 LDFLAGS += -static -pthread -L$(POPCORN_LIB_PATH)
-LIBS += -l:$(LIBPOPCORN)
+LIBS += -l:$(LIBMIGRATE)
 
 TARGETS = basic pingpong demo mt stack rw status
 OBJDUMPS =

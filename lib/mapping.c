@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "config.h"
-#include <popcorn.h>
+#include "migrate.h"
 
 /* Default node ID if no mapping is available. */
 static int default_node = 0;

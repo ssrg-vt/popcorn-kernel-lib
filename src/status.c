@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <errno.h>
 
-#include "popcorn.h"
+#include "migrate.h"
 
 static const char *arch_sz[] = {
 	"arm64",

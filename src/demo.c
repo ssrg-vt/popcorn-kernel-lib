@@ -11,7 +11,7 @@
 #include <fcntl.h>
 #include <pthread.h>
 
-#include "popcorn.h"
+#include "migrate.h"
 
 int nthreads = 1;
 int nodes = 3;
@@ -145,7 +145,6 @@ static int __migrate_thread(int tid, int nid)
 
 static int __init_thread_params(void)
 {
-	const int PAGE_SIZE = 4096;
 	int i;
 	threads = (struct thread **)malloc(sizeof(struct thread *) * nthreads);
 	global = (unsigned long *)malloc(sizeof(unsigned long) * nthreads);

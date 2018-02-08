@@ -5,7 +5,7 @@
 #include <sys/time.h>
 #include <unistd.h>
 
-#include "popcorn.h"
+#include "migrate.h"
 
 int main(int argc, char *argv[])
 {
