@@ -6,6 +6,8 @@ demo
 rw
 stack
 status
+grep
+kmeans
 
 # ASM dumps
 *.asm
