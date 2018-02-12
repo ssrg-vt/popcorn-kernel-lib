@@ -3,6 +3,10 @@
 
 #include <stdlib.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define MAX_POPCORN_NODES	32
 
 /**
@@ -164,7 +168,7 @@ struct popcorn_node_info {
 	int distance;
 };
 
-int popcorn_get_node_info(struct popcorn_node_info *info);
+int popcorn_get_node_info(int *current_nid, struct popcorn_node_info *info);
 
 
 /**
@@ -235,5 +239,7 @@ static inline int popcorn_release_ownership(void *start, size_t len) { return -2
 }
 #endif /* SCHEDULE_THREADS */
 #endif /* _OPENMP */
-
+#ifdef __cplusplus
+}
+#endif
 #endif

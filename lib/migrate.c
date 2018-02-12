@@ -109,9 +109,9 @@ int popcorn_propose_migration(pid_t tid, int nid)
 }
 
 struct popcorn_node_info;
-int popcorn_get_node_info(struct popcorn_node_info *info)
+int popcorn_get_node_info(int *current_nid, struct popcorn_node_info *info)
 {
-	return syscall(SYSCALL_POPCORN_GET_NODE_INFO, info);
+	return syscall(SYSCALL_POPCORN_GET_NODE_INFO, current_nid, info);
 }
 
 #ifdef WAIT_FOR_DEBUGGER
