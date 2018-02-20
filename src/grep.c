@@ -321,7 +321,7 @@ int main(int argc, char *argv[])
         PROT_READ, MAP_PRIVATE, fdata_fd, 0);
 #endif
 
-    PRINTF("File size is %llu\n", fdata_stat.st_size);
+    PRINTF("File size is %lu\n", fdata_stat.st_size);
     PRINTF("grep: calling pthread grep\n");
 
     gettimeofday(&starttime,0);

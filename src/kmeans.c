@@ -284,6 +284,7 @@ int main(int argc, char **argv)
 	struct timeval beginT, startT, endT;
 	int num_procs, curr_cluster, curr_mean, cluster_per_thread,
 		mean_per_thread, i, excess_cluster, excess_mean;
+	int iter = 0;
 	pthread_t *pid;
 	pthread_attr_t attr;
 	thread_arg *arg;
