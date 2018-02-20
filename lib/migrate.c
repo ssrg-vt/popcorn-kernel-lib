@@ -126,9 +126,10 @@ static int __wait_for_debugger = 1;
 #define SET_XMM_REGISTER(x) \
 		asm volatile ("movdqu %0, %%xmm"#x :: "m"(regs.xmm[x]))
 
-void migrate(int nid, void (*callback_fn)(void *), void *callback_args)
+int migrate(int nid, void (*callback_fn)(void *), void *callback_args)
 {
 	struct regset_x86_64 regs;
+	int ret;
 
 #ifdef DEBUG
 	memset(&regs, 0xcd, sizeof(regs));
@@ -195,6 +196,9 @@ void migrate(int nid, void (*callback_fn)(void *), void *callback_args)
 
 migrated:
 	asm volatile ("mfence" ::: "memory");
+	asm volatile ("mov %%eax, %0" : "=g"(ret));
+	if (ret < 0) return ret * -1;
+
 #ifdef WAIT_FOR_DEBUGGER
 	while (__wait_for_debugger);
 #endif
@@ -217,7 +221,7 @@ migrated:
 	SET_XMM_REGISTER(15);
 
 	if (callback_fn) callback_fn(callback_args);
-	return;
+	return 0;
 }
 
 
@@ -229,9 +233,10 @@ migrated:
 #define SET_FP_REGISTER(r) \
 		asm volatile ("ldr q"#r", %0" : "=m"(regs.v[r]))
 
-void migrate(int nid, void (*callback_fn)(void *), void *callback_args)
+int migrate(int nid, void (*callback_fn)(void *), void *callback_args)
 {
 	struct regset_aarch64 regs;
+	int ret;
 
 #ifdef DEBUG
 	memset(&regs, 0xcd, sizeof(regs));
@@ -332,6 +337,9 @@ void migrate(int nid, void (*callback_fn)(void *), void *callback_args)
 
 migrated:
 	asm volatile ("" ::: "memory");
+	asm volatile ("mov %w0, w0" : "=g"(ret));
+	if (ret < 0) return ret * -1;
+
 #ifdef WAIT_FOR_DEBUGGER
 	while (__wait_for_debugger);
 #endif
@@ -370,7 +378,7 @@ migrated:
 	SET_FP_REGISTER(31);
 
 	if (callback_fn) callback_fn(callback_args);
-	return;
+	return 0;
 }
 
 #elif __powerpc64__
@@ -381,7 +389,7 @@ migrated:
 #define SET_FP_REGISTER(r) \
 		asm volatile ("lfd "#r", %0" : : "m"(regs.fpr[r]))
 
-void migrate(int nid, void (*callback_fn)(void *), void *callback_args)
+int migrate(int nid, void (*callback_fn)(void *), void *callback_args)
 {
 	struct regset_ppc regs;
 
@@ -532,6 +540,6 @@ void migrate(int nid, void (*callback_fn)(void *), void *callback_args)
 	SET_FP_REGISTER(31);
 
 	if (callback_fn) callback_fn(callback_args);
-	return;
+	return 0;
 }
 #endif

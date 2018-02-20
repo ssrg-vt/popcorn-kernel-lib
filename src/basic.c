@@ -10,6 +10,7 @@
 int main(int argc, char *argv[])
 {
 	unsigned long delay_ms;
+	int ret;
 
 	if (argc == 2) {
 		delay_ms = atol(argv[1]);
@@ -22,9 +23,14 @@ int main(int argc, char *argv[])
 	}
 
 	printf("Travel for %ld ms\n", delay_ms);
-	migrate(1, NULL, NULL);
-	usleep(delay_ms * 1000);
-	migrate(0, NULL, NULL);
+	ret = migrate(1, NULL, NULL);
+	if (ret) goto out_ret;
 
-	return 0;
+	usleep(delay_ms * 1000);
+	ret = migrate(0, NULL, NULL);
+
+	return ret;
+out_ret:
+	fprintf(stderr, "Cannot migrate to 1: %d\n", ret);
+	return ret;
 }

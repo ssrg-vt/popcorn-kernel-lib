@@ -36,10 +36,10 @@ extern "C" {
  *  EAGAIN: @nid is offline now
  *  EBUSY:  already running at @nid
  */
-void migrate(int nid, void (*callback)(void *), void *callback_param);
+int migrate(int nid, void (*callback)(void *), void *callback_param);
 
-static inline void popcorn_migrate(int nid) {
-	migrate(nid, NULL, NULL);
+static inline int popcorn_migrate(int nid) {
+	return migrate(nid, NULL, NULL);
 }
 
 /**
