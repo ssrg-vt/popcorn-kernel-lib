@@ -11,7 +11,7 @@ CFLAGS += -DDEBUG -g -Wall -I$(POPCORN_INC_PATH)
 #CFLAGS += -DWAIT_FOR_DEBUGGER
 
 LDFLAGS += -static -L$(POPCORN_LIB_PATH)
-LIBS += -pthread -l:$(LIBMIGRATE)
+LIBS += -pthread /usr/local/popcorn/x86_64/lib/libdsm-prefetch.a -l:$(LIBMIGRATE)
 
 TARGETS = basic pingpong demo mt stack rw status kmeans grep
 OBJDUMPS =

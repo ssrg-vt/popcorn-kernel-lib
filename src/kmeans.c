@@ -12,6 +12,7 @@
 
 #include "migrate.h"
 #include "utils.h"
+#include "dsm-prefetch.h"
 
 int num_points = 5000000;	/* number of vectors */
 int num_means = 100;		/* number of clusters */
@@ -266,11 +267,36 @@ static void *thread_loop(void *args)
 
 		/* Wait for main thread to reset modified */
 		pthread_barrier_wait(&barr);
+
+		popcorn_prefetch(READ, means, &means[num_means * dim]);
+		popcorn_prefetch(READ, &points[targ->cluster_start_idx * dim],
+										 &points[cluster_end * dim]);
+		popcorn_prefetch(WRITE, &clusters[targ->cluster_start_idx],
+										 &clusters[cluster_end]);
+		popcorn_prefetch_execute(targ->nid);
+
 		find_clusters(targ->cluster_start_idx, cluster_end);
+
+		popcorn_prefetch(RELEASE, means, &means[num_means * dim]);
+		popcorn_prefetch(RELEASE, &points[targ->cluster_start_idx * dim],
+										 &points[cluster_end * dim]);
+		popcorn_prefetch_execute(targ->nid);
 
 		/* Wait for all cluster updates */
 		pthread_barrier_wait(&barr);
+
+		// Note: we may be prefetching point pages even though they're not needed
+		popcorn_prefetch(READ, points, &points[num_points * dim]);
+		popcorn_prefetch(READ, clusters, &clusters[num_points]);
+		popcorn_prefetch(WRITE, &means[targ->means_start_idx * dim],
+										 &means[means_end * dim]);
+		popcorn_prefetch_execute(targ->nid);
+
 		calc_means(targ->means_start_idx, means_end, sum);
+
+		popcorn_prefetch(RELEASE, points, &points[num_points * dim]);
+		popcorn_prefetch(RELEASE, clusters, &clusters[num_points]);
+		popcorn_prefetch_execute(targ->nid);
 	}
 
 	free(sum);
