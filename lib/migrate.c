@@ -121,6 +121,8 @@ static int __wait_for_debugger = 1;
 #ifdef __x86_64__
 #define GET_REGISTER(x) \
 		asm volatile ("mov %%"#x", %0" : "=m"(regs.x))
+#define SET_REGISTER(x) \
+		asm volatile ("mov %0, %%"#x"" :: "m"(regs.x))
 #define GET_XMM_REGISTER(x) \
 		asm volatile ("movdqu %%xmm"#x", %0" : "=m"(regs.xmm[x]))
 #define SET_XMM_REGISTER(x) \
@@ -182,7 +184,6 @@ int migrate(int nid, void (*callback_fn)(void *), void *callback_args)
 		: "=m"(regs.rip)
 		: "i"(&&migrated)
 	);
-	asm volatile ("mfence" ::: "memory");
 
 	asm volatile (
 			"mov %0, %%edi;"
@@ -196,12 +197,16 @@ int migrate(int nid, void (*callback_fn)(void *), void *callback_args)
 
 migrated:
 	asm volatile ("mfence" ::: "memory");
-	asm volatile ("mov %%eax, %0" : "=g"(ret));
-	if (ret < 0) return ret * -1;
-
 #ifdef WAIT_FOR_DEBUGGER
 	while (__wait_for_debugger);
 #endif
+
+	SET_REGISTER(rbp);
+	SET_REGISTER(rbx);
+	SET_REGISTER(r12);
+	SET_REGISTER(r13);
+	SET_REGISTER(r14);
+	SET_REGISTER(r15);
 
 	SET_XMM_REGISTER(0);
 	SET_XMM_REGISTER(1);
@@ -220,6 +225,9 @@ migrated:
 	SET_XMM_REGISTER(14);
 	SET_XMM_REGISTER(15);
 
+	asm volatile ("mov %%eax, %0" : "=g"(ret));
+	if (ret < 0) return ret * -1;
+
 	if (callback_fn) callback_fn(callback_args);
 	return 0;
 }
@@ -228,10 +236,12 @@ migrated:
 #elif __aarch64__
 #define GET_REGISTER(r) \
 		asm volatile ("str x"#r", %0" : "=m"(regs.x[r]))
+#define SET_REGISTER(r) \
+		asm volatile ("ldr x"#r", %0" :: "m"(regs.x[r]))
 #define GET_FP_REGISTER(r) \
 		asm volatile ("str q"#r", %0" : "=m"(regs.v[r]))
 #define SET_FP_REGISTER(r) \
-		asm volatile ("ldr q"#r", %0" : "=m"(regs.v[r]))
+		asm volatile ("ldr q"#r", %0" :: "m"(regs.v[r]))
 
 int migrate(int nid, void (*callback_fn)(void *), void *callback_args)
 {
@@ -337,12 +347,27 @@ int migrate(int nid, void (*callback_fn)(void *), void *callback_args)
 
 migrated:
 	asm volatile ("" ::: "memory");
-	asm volatile ("mov %w0, w0" : "=g"(ret));
-	if (ret < 0) return ret * -1;
-
 #ifdef WAIT_FOR_DEBUGGER
 	while (__wait_for_debugger);
 #endif
+	SET_REGISTER(2);
+	SET_REGISTER(14);
+	SET_REGISTER(15);
+	SET_REGISTER(16);
+	SET_REGISTER(17);
+	SET_REGISTER(18);
+	SET_REGISTER(19);
+	SET_REGISTER(20);
+	SET_REGISTER(21);
+	SET_REGISTER(22);
+	SET_REGISTER(23);
+	SET_REGISTER(24);
+	SET_REGISTER(25);
+	SET_REGISTER(26);
+	SET_REGISTER(27);
+	SET_REGISTER(28);
+	SET_REGISTER(29);
+	SET_REGISTER(30);
 
 	SET_FP_REGISTER(0);
 	SET_FP_REGISTER(1);
@@ -376,6 +401,10 @@ migrated:
 	SET_FP_REGISTER(29);
 	SET_FP_REGISTER(30);
 	SET_FP_REGISTER(31);
+
+	asm volatile ("mov %w0, w0" : "=g"(ret));
+	if (ret < 0) return ret * -1;
+
 
 	if (callback_fn) callback_fn(callback_args);
 	return 0;
