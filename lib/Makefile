@@ -9,7 +9,7 @@ RANLIB = $(CROSS_COMPILE)ranlib
 
 # Higher -O causes unexpected results
 ifeq ($(ARCH),arm64)
-OFLAGS = -O0
+OFLAGS = -O2
 else ifeq ($(ARCH),powerpc)
 OFLAGS = -O0
 else
