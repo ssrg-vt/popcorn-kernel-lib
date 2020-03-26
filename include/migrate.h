@@ -67,7 +67,6 @@ static inline void popcorn_migrate_schedule (size_t region, int popcorn_tid) {
  */
 struct popcorn_thread_status {
 	int current_nid;
-	int proposed_nid;
 	int peer_nid;
 	int peer_pid;
 };
@@ -80,19 +79,6 @@ static inline int popcorn_current_nid(void) {
 
 	return status.current_nid;
 }
-
-
-/**
- * Propose to migrate @tid to @nid
- *
- * If @tid 0 means to propose the migration for the current one.
- *
- * return 0 on success, return non-zero otherwise.
- *  ENOENT: no thread corresponding to @tid
- *  EINVAL: invalid @nid
- */
-int popcorn_propose_migration(int tid, int nid);
-
 
 
 /**
@@ -168,7 +154,7 @@ struct popcorn_node_info {
 	int distance;
 };
 
-int popcorn_get_node_info(int *current_nid, struct popcorn_node_info *info);
+int popcorn_get_node_info(int *current_nid, struct popcorn_node_info *info, int len);
 
 
 /**

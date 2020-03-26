@@ -6,14 +6,14 @@ POPCORN_LIB_PATH = ../lib
 POPCORN_INC_PATH = ../include
 
 # Features
-CFLAGS += -O2
+CFLAGS += -Og
 CFLAGS += -DDEBUG -g -Wall -I$(POPCORN_INC_PATH)
 #CFLAGS += -DWAIT_FOR_DEBUGGER
 
 LDFLAGS += -static -L$(POPCORN_LIB_PATH)
 LIBS += -pthread -l:$(LIBMIGRATE)
 
-TARGETS = basic pingpong demo mt stack rw status kmeans grep
+TARGETS = basic ft2a ft2b ft2c pingpong demo mt stack rw status kmeans grep
 OBJDUMPS =
 
 all: $(TARGETS) $(OBJDUMPS)
@@ -25,6 +25,24 @@ basic : basic.o
 	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
 
 basic.asm: basic
+	$(OBJDUMP) $< > $@
+
+ft2a : ft2a.o
+	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
+
+ft2a.asm: ft2a
+	$(OBJDUMP) $< > $@
+
+ft2b : ft2b.o
+	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
+
+ft2b.asm: ft2b
+	$(OBJDUMP) $< > $@
+
+ft2c : ft2c.o
+	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
+
+ft2c.asm: ft2c
 	$(OBJDUMP) $< > $@
 
 pingpong: pingpong.o

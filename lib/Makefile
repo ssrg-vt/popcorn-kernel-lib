@@ -9,11 +9,11 @@ RANLIB = $(CROSS_COMPILE)ranlib
 
 # Higher -O causes unexpected results
 ifeq ($(ARCH),arm64)
-OFLAGS = -O2
+OFLAGS = -Og
 else ifeq ($(ARCH),powerpc)
-OFLAGS = -O0
+OFLAGS = -Og
 else
-OFLAGS = -O2 -fno-schedule-insns -fno-schedule-insns2
+OFLAGS = -Og -fno-schedule-insns -fno-schedule-insns2
 endif
 
 # Features

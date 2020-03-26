@@ -23,7 +23,7 @@ int main(int argc, const char *argv[])
 
 	/* Inquiry the entire rack's status */
 	printf("** Nodes' status  **\n");
-	if (popcorn_get_node_info(&current_nid, nodes)) {
+	if (popcorn_get_node_info(&current_nid, nodes, MAX_POPCORN_NODES)) {
 		perror(" Cannot retrieve the nodes' information");
 		return -EINVAL;
 	}
@@ -41,29 +41,29 @@ int main(int argc, const char *argv[])
 		return -EINVAL;
 	}
 	printf(" - currently at node %d\n", status.current_nid);
-	printf(" - migration destination is ");
-	if (status.proposed_nid == -1) {
-		printf("not proposed\n");
-	} else {
-		printf("proposed to %d\n", status.proposed_nid);
-	}
-
-	srand(time(NULL));
-	dest = rand() % MAX_POPCORN_NODES;
-
-	/* Propose to migrate this thread to 1 */
-	printf("\n** Migration proposal test **\n");
-	printf(" - Propose to migrate this to node %d\n", dest);
-	popcorn_propose_migration(0, dest);
-
-	popcorn_get_status(&status);
-	printf(" - migration destination is ");
-	if (status.proposed_nid == -1) {
-		printf("not proposed\n");
-	} else {
-		printf("proposed to %d (%s)\n", status.proposed_nid,
-			dest == status.proposed_nid ? "PASSED" : "FAILED");
-	}
+//	printf(" - migration destination is ");
+//	if (status.proposed_nid == -1) {
+//		printf("not proposed\n");
+//	} else {
+//		printf("proposed to %d\n", status.proposed_nid);
+//	}
+//
+//	srand(time(NULL));
+//	dest = rand() % MAX_POPCORN_NODES;
+//
+//	/* Propose to migrate this thread to 1 */
+//	printf("\n** Migration proposal test **\n");
+//	printf(" - Propose to migrate this to node %d\n", dest);
+//	popcorn_propose_migration(0, dest);
+//
+//	popcorn_get_status(&status);
+//	printf(" - migration destination is ");
+//	if (status.proposed_nid == -1) {
+//		printf("not proposed\n");
+//	} else {
+//		printf("proposed to %d (%s)\n", status.proposed_nid,
+//			dest == status.proposed_nid ? "PASSED" : "FAILED");
+//	}
 
 	return 0;
 }
