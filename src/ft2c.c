@@ -189,20 +189,20 @@ static void *child_thread(void *input)
         return NULL;
     }
 
-    printf("FT_2_C: We should have arrived at sink node.\n");
+    //printf("FT_2_C: We should have arrived at sink node.\n");
 
     /* We should be at sink_nid. Get TID at Sink Node */
     sink_tid = popcorn_gettid();
 
     if(sink_tid == -1)
     {
-        printf("FT_2_C FAILED: Thread ID is not a positive integer, TID: %d\n", sink_tid);
+        //printf("FT_2_C FAILED: Thread ID is not a positive integer, TID: %d\n", sink_tid);
         ft2c_thread_errno = -1;
         pcn_thread->done = 1;
         return NULL;
     }
 
-    printf("FT_2_C: Thread ID is %d\n", sink_tid);
+    //printf("FT_2_C: Thread ID is %d\n", sink_tid);
 
     /* Node Sanity Check */
     if((ft2c_thread_errno = node_sanity_check(pcn_thread->sink_nid, pcn_thread->source_nid)))
