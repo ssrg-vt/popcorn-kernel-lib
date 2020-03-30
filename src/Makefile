@@ -13,7 +13,7 @@ CFLAGS += -DDEBUG -g -Wall -I$(POPCORN_INC_PATH)
 LDFLAGS += -static -L$(POPCORN_LIB_PATH)
 LIBS += -pthread -l:$(LIBMIGRATE)
 
-TARGETS = basic ft2a ft2b ft2c pingpong demo mt stack rw status kmeans grep
+TARGETS = basic ft2a ft2b ft2c ft2d pingpong demo mt stack rw status kmeans grep
 OBJDUMPS =
 
 all: $(TARGETS) $(OBJDUMPS)
@@ -43,6 +43,12 @@ ft2c : ft2c.o
 	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
 
 ft2c.asm: ft2c
+	$(OBJDUMP) $< > $@
+
+ft2d : ft2d.o
+	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
+
+ft2d.asm: ft2d
 	$(OBJDUMP) $< > $@
 
 pingpong: pingpong.o
