@@ -13,19 +13,13 @@ CFLAGS += -DDEBUG -g -Wall -I$(POPCORN_INC_PATH)
 LDFLAGS += -static -L$(POPCORN_LIB_PATH)
 LIBS += -pthread -l:$(LIBMIGRATE)
 
-TARGETS = basic ft2a ft2b ft2c ft2d pingpong demo mt stack rw status kmeans grep
+TARGETS = ft2a ft2b ft2c ft2d kmeans
 OBJDUMPS =
 
 all: $(TARGETS) $(OBJDUMPS)
 
 %.o: %.c
 	$(CC) -c $(CFLAGS) $^ -o $@
-
-basic : basic.o
-	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
-
-basic.asm: basic
-	$(OBJDUMP) $< > $@
 
 ft2a : ft2a.o
 	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
@@ -51,31 +45,7 @@ ft2d : ft2d.o
 ft2d.asm: ft2d
 	$(OBJDUMP) $< > $@
 
-pingpong: pingpong.o
-	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
-
-demo: demo.o
-	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
-
-mt: mt.o
-	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
-
-stack: stack.o
-	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
-
-rw: rw.o
-	$(CC) $(LDFLAGS) $^ $(LIBS) -o $@
-
-status: status.o
-	$(CC) $(LDFLAGS) $^ $(LIBS) -o $@
-
-demo.asm: demo
-	$(OBJDUMP) $< > $@
-
 kmeans: kmeans.o
-	$(CC) $(LDFLAGS) $^ $(LIBS) -o $@
-
-grep: grep.o
 	$(CC) $(LDFLAGS) $^ $(LIBS) -o $@
 
 clean:

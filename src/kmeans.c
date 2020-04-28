@@ -1,3 +1,11 @@
+// SPDX-License-Identifier: GPL-2.0-only & 3-clause BSD
+/*
+ * kmeans
+ *
+ * Copyright SSRG - University of Virginia Tech - Popcorn Kernel Library
+ *
+ */
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -12,6 +20,16 @@
 
 #include "migrate.h"
 #include "utils.h"
+
+#define NODE_OFFLINE 0
+#define X86_64_ARCH 1
+static const char *arch_sz[] = {
+	"unknown",
+	"arm64",
+	"x86-64",
+	"ppc64le",
+	NULL,
+};
 
 int num_points = 5000000;	/* number of vectors */
 int num_means = 100;		/* number of clusters */
@@ -244,19 +262,108 @@ void calc_means(int start_idx, int end_idx, int *sum)
 	}
 }
 
+int node_sanity_check(int local_nid, int remote_nid, pid_t tid)
+{
+	int current_nid;
+	int node_err = 0;
+	struct popcorn_node_info pnodes[2];
+
+	/* Get Node Info. Make sure We can retrieve the right node's information */
+	node_err = popcorn_get_node_info(&current_nid, pnodes, 2);
+
+	if (node_err) {
+		printf("kmeans[%d] FAILED: popcorn_get_node_info, Cannot retrieve the nodes' information at node %d. ERROR CODE %d\n", tid, current_nid, node_err);
+		return node_err;
+	}
+
+	/* Testing Node Info */
+	if(current_nid != local_nid) {
+		printf("kmeans[%d] FAILED: We should be at Node %d. Yet we are at node %d\n", tid, local_nid, current_nid);
+		node_err = -1;
+		return node_err;
+	} else if(pnodes[local_nid].status == NODE_OFFLINE) {
+		printf("kmeans[%d] FAILED: Node %d is offline.\n", tid, local_nid);
+		node_err = -1;
+		return node_err;
+	} else if(pnodes[remote_nid].status == NODE_OFFLINE) {
+		printf("kmeans[%d] FAILED: Node %d is offline.\n", tid, remote_nid);
+		node_err = -1;
+		return node_err;
+	} else if(pnodes[local_nid].arch != X86_64_ARCH) {
+		printf("kemans[%d] WARN: Node %d does not have expected X86 architecture. Architecture is %s.\n", tid, local_nid, arch_sz[pnodes[local_nid].arch + 1]);
+	} else if(pnodes[remote_nid].arch != X86_64_ARCH) {
+		printf("kmeans[%d] WARN: Node %d does not have expected X86 architecture. Architecture is %s.\n", tid, remote_nid, arch_sz[pnodes[remote_nid].arch + 1]);
+	}
+
+	return node_err;
+}
+
+
+int thread_sanity_check(int nid, pid_t tid)
+{
+	struct popcorn_thread_status status;
+	int thread_err = 0;
+
+	thread_err = popcorn_get_status(&status);
+
+	if (thread_err) {
+		printf("kmeans[%d] FAILED: popcorn_get_status, Cannot retrieve the thread' information at node %d. ERROR CODE: %d\n", tid, nid, thread_err);
+		return thread_err;
+	}
+
+	if(status.current_nid != nid) {
+		printf("kmeans[%d] FAILED: popcorn_get_status, Thread %d should be at node %d. But instead it is at node %d\n", tid, tid, nid, status.current_nid);
+		thread_err = -1;
+		return thread_err;
+	}
+
+	return thread_err;
+}
+
 static void *thread_loop(void *args)
 {
 	thread_arg *targ = (thread_arg *)args;
 	int cluster_end = targ->cluster_start_idx + targ->cluster_num_pts;
 	int means_end = targ->means_start_idx + targ->means_num_pts;
 	int *sum;
+	pid_t my_otid;
+	pid_t my_rtid;
+	int t_warn;
+	int t_node_sanity_remote_fail = 0;
+	int t_thread_sanity_remote_fail = 0;
 
 #ifdef _ALIGN_VARIABLES
 	sum = popcorn_malloc(sizeof(int) * dim);
 #else
 	sum = (int *)malloc(sizeof(int) * dim);
 #endif
+	my_otid = popcorn_gettid();
+
+	printf("kmeans[%d]: Migrating to %d\n", my_otid, targ->nid);
+
+	/* Node Sanity Check */
+	if((t_warn = node_sanity_check(0, targ->nid, my_otid))) {
+		printf("kmeans[%d] WARN: Node sanity check failed at node %d\n", my_otid, 0);
+	}
+
+	/*Get thread status. */
+	if((t_warn = thread_sanity_check(0, my_otid))) {
+		printf("kmeans[%d] WARN: Thread sanity check failed at node %d\n", my_otid, 0);
+	}
+
 	migrate(targ->nid, NULL, NULL);
+
+	my_rtid = popcorn_gettid();
+
+	/* Node Sanity Check */
+	if((t_warn = node_sanity_check(targ->nid, 0, my_rtid))) {
+		t_node_sanity_remote_fail = 1;
+	}
+
+	/*Get thread status. */
+	if((t_warn = thread_sanity_check(targ->nid, my_rtid))) {
+		t_thread_sanity_remote_fail = 1;
+	}
 
 	/* Iterative loop */
 	while(modified)
@@ -275,6 +382,24 @@ static void *thread_loop(void *args)
 
 	free(sum);
 	migrate(0, NULL, NULL);
+
+	printf("kmeans[%d]: Migrated from %d where tid was %d\n", my_otid, targ->nid, my_rtid);
+
+	if(t_node_sanity_remote_fail)
+		printf("kmeans[%d] WARN: Node sanity check failed at node %d\n", my_rtid, targ->nid);
+
+	if(t_thread_sanity_remote_fail)
+		printf("kmeans[%d] WARN: Thread sanity check failed at node %d\n", my_rtid, targ->nid);
+
+	/* Node Sanity Check */
+	if((t_warn = node_sanity_check(0, targ->nid, my_otid))) {
+		printf("kmeans[%d] WARN: Node sanity check failed at node %d\n", my_otid, 0);
+	}
+
+	/*Get thread status. */
+	if((t_warn = thread_sanity_check(0, my_otid))) {
+		printf("kmeans[%d] WARN: Thread sanity check failed at node %d\n", my_otid, 0);
+	}
 
 	return NULL;
 }
@@ -338,7 +463,7 @@ int main(int argc, char **argv)
 		}
 		curr_mean += arg[i].means_num_pts;
 
-		arg[i].nid = i / threads_per_node;
+		arg[i].nid = 1;
 		pthread_create(&pid[i], &attr, thread_loop, &arg[i]);
 	}
 

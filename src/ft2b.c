@@ -1,6 +1,6 @@
 #define _GNU_SOURCE
 
-// SPDX-License-Identifier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only, 3-clause BSD
 /*
  * ft2b - Simple Migration Functional 2 Node Test B
  *
@@ -9,21 +9,20 @@
  *
  * Based on code by:
  *   University of Virginia Tech - Popcorn Kernel Library
- *   [First Name, Last Name] <TBD>
  *
  * What this file implements:
  *
  * Setup/Config Rules - Linux will be compiled and configured with
- * file popcorn-kernel/kernel/popcorn/configs/config-x86_64-qemu.
+ * file kernel/popcorn/configs/config-x86_64-qemu.
  * IP addresses (10.4.4.100, 10.4.4.101) will be used for node 0 and node 1 respectively.
  * This test will run as part of Popcorn’s CI regression suite.
  *
  * Run Description - This test will call from the parent process popcorn_migrate to migrate a single task from node A to node B.
  * The test will only be performed on x86 architecture. Both nodes will be of the same architecture.
- * Pass criteria - Popcorn_migrate returns without errors. Task is successfully migrated to node A without errors or segmentation faults,
- * kernel panics or oops. Task_struct should match expected values at node B.
+ * Pass criteria - Popcorn_migrate returns without errors. Task is successfully migrated to node A without errors.
+ * Task_struct should match expected values at node B.
  * Input/Output - This test takes two inputs. int A = Source Node; int B = Sink Node
- * Platform - This test must run on QEMU, and HW (x86)
+ * Platform - This test must run on QEMU, HW (x86) -> [TODO]
  *
  */
 
@@ -160,8 +159,6 @@ int main(int argc, char *argv[])
         ft2b_errno = -(FT2B_ERR+6);
         return ft2b_errno;
     }
-
-    /* TODO: Need to understand what peer_nid, peer_pid and proposed_nid mean in this context to test for the right values */
 
     /* Migrate Process to Sink_Node */
     ft2b_errno = migrate(sink_node, (void*)&callback_ft2b, callback_ptr);

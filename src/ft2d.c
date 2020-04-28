@@ -1,6 +1,6 @@
 #define _GNU_SOURCE
 
-// SPDX-License-Identifier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only, 3-clause BSD
 /*
  * ft2d - Simple Migration Functional 2 Node Test D
  *
@@ -9,21 +9,20 @@
  *
  * Based on code by:
  *   University of Virginia Tech - Popcorn Kernel Library
- *   [First Name, Last Name] <TBD>
  *
  * What this file implements:
  *
  * Setup/Config Rules - Linux will be compiled and configured with
- * file popcorn-kernel/kernel/popcorn/configs/config-x86_64-qemu.
+ * file kernel/popcorn/configs/config-x86_64-qemu.
  * IP addresses (10.4.4.100, 10.4.4.101) will be used for node 0 and node 1 respectively.
  * This test will run as part of Popcorn’s CI regression suite.
  *
  * Run Description - This test will fork multiple threads and migrate them using popcorn_migrate from node A to node B.
  * The test will only be performed on x86 architecture. Both nodes will be of the same architecture.
- * Pass criteria - Popcorn_migrate returns without errors. Thread is successfully migrated to Node B and back to Node A without errors or segmentation faults,
- * kernel panics or oops. Task_struct should match expected values at node B & node A.
- * Input/Output - This test takes two inputs. int A = Source Node; int B = Sink Node
- * Platform - This test must run on QEMU, and HW (x86)
+ * Pass criteria - Popcorn_migrate returns without errors. Threads are successfully migrated to Node B and back to Node A without errors.
+ * Task_struct should match expected values at node B & node A.
+ * Input/Output - This test takes three inputs. int A = Source Node; int B = Sink Node; int C = Number of Threads
+ * Platform - This test must run on QEMU, HW (x86) -> [TODO]
  *
  */
 
@@ -132,8 +131,6 @@ int thread_sanity_check(int nid, pid_t tid)
 		thread_err = -1;
 		return thread_err;
 	}
-
-	/* TODO: Need to understand what peer_nid, peer_pid and proposed_nid mean in this context to test for the right values */
 
 	return thread_err;
 }
@@ -315,12 +312,12 @@ int main(int argc, char *argv[])
 
     pthread_barrier_wait(&barrier_start);
 
-    /* Wait for thread to finish. Spinning here is not egrigious as thread should finish quickly. */
     while(all_done < nthreads);
 
     for(i = 0; i < nthreads; i++) {
-    	pcn_thread = threads[i];
-    	pthread_join(pcn_thread->thread_info, (void(**))(&ft2d_errno));
+	int *errno_ptr = &ft2d_errno;
+	pcn_thread = threads[i];
+    	pthread_join(pcn_thread->thread_info, (void(**))(&errno_ptr));
     	printf("FT_2_D TEST at NODE %d Thread %d exited with CODE %d\n", source_node, pcn_thread->tid, pcn_thread->err);
     	free(pcn_thread);
     }
